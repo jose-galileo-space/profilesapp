@@ -17,12 +17,13 @@ export default function App() {
         alignItems="center"
         textAlign="center"
         height="100%"
+        width="100%"
       >
         <Heading level={1} className="fade-in-text hero-title">
           Galileo Space
         </Heading>
         <Link to="/learn-more" className="learn-more-link">
-          <Text>learn more</Text>
+          <Text className="learn-more-link">learn more</Text>
         </Link>
       </Flex>
     </View>
