@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Authenticator } from "@aws-amplify/ui-react";
 
 import App from "./App";
 import LearnMorePage from "./LearnMorePage"; // Import the new page
