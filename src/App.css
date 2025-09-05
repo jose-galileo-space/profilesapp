@@ -40,3 +40,68 @@
 .read-the-docs {
   color: #888;
 }
+
+/* src/App.css */
+
+.hero-container {
+  /* Set the background image */
+  background-image: url('./assets/space.png');
+  
+  /* Ensure the image covers the entire screen */
+  height: 100vh; /* 100% of the viewport height */
+  width: 100vw;  /* 100% of the viewport width */
+  background-size: cover;
+  background-position: center;
+  
+  /* Make sure content inside is positioned relative to this container */
+  position: relative;
+  overflow: hidden; /* Hide anything that might overflow */
+}
+
+.hero-title {
+  color: white;
+  font-size: 6rem; /* Large font size */
+  font-weight: 700;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* Add a subtle shadow for readability */
+}
+
+.learn-more-link {
+  color: #c7c7c7; /* A lighter grey color */
+  text-decoration: none; /* Remove the default underline */
+  margin-top: 20px;
+  border: 1px solid transparent;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: color 0.3s ease, border-color 0.3s ease; /* Smooth transition for hover effect */
+  opacity: 0; /* Start hidden */
+  animation: fadeIn 2s ease-in-out 1s forwards; /* Delayed fade-in animation */
+}
+
+.learn-more-link:hover {
+  color: white;
+  border-color: white;
+}
+
+/* Define the fade-in animation */
+.fade-in-text {
+  opacity: 0; /* Start invisible */
+  animation: fadeIn 2s ease-in-out forwards; /* Apply the animation */
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px); /* Optional: slide in from below */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 3.5rem;
+  }
+}
