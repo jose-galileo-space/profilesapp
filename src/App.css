@@ -61,17 +61,16 @@
 .hero-title {
   color: white;
   font-size: 6rem; /* Large font size */
-  font-weight: 700;
+  font-weight: 600;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* Add a subtle shadow for readability */
 }
 
 .learn-more-link {
-  color: #c7c7c7; /* A lighter grey color */
+  color: white;
   text-decoration: none; /* Remove the default underline */
-  margin-top: 20px;
+  font-size: 4rem;
+  font-weight: 400;
   border: 1px solid transparent;
-  padding: 8px 16px;
-  border-radius: 4px;
   transition: color 0.3s ease, border-color 0.3s ease; /* Smooth transition for hover effect */
   opacity: 0; /* Start hidden */
   animation: fadeIn 2s ease-in-out 1s forwards; /* Delayed fade-in animation */
