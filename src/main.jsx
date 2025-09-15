@@ -1,25 +1,23 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Timeline from "./components/Timeline.jsx";
+import Traction from "./components/Traction.jsx";
+import OurTeam from "./components/OurTeam.jsx";
 
 import App from "./App";
-import LearnMorePage from "./LearnMorePage"; // Import the new page
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-      <BrowserRouter>
-        <Routes>
-          {/* The main route '/' will show the App component inside the Authenticator */}
-          <Route
-            path="/"
-            element={
-                <App />
-            }
-          />
-          {/* The '/learn-more' route will show the new page */}
-          <Route path="/learn-more" element={<LearnMorePage />} />
-        </Routes>
-      </BrowserRouter>
+    <BrowserRouter>
+      <Routes>
+        {/* The main route '/' will show the App component inside the Authenticator */}
+        <Route path="/" element={<App />} />
+        <Route path="/timeline" element={<Timeline />} />
+        <Route path="/traction" element={<Traction />} />
+        <Route path="/our-team" element={<OurTeam />} />
+      </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
