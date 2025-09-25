@@ -1,18 +1,7 @@
-import React, { useState } from "react";
-import Navbar from "./Navbar.jsx";
 import "./LearnMore.css";
 export default function LearnMore() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
   return (
     <div className="learn-more-page">
-      <Navbar
-        isMenuOpen={isMenuOpen}
-        setIsMenuOpen={setIsMenuOpen}
-        toggleMenu={toggleMenu}
-      />
       <div className="content-section">
         <div className="content-card">
           <h2 className="section-title">

@@ -1,86 +1,39 @@
 
-.hamburger-menu {
-  position: relative;
-}
-
-.hamburger-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  width: 50px; /* Size of the button*/
-  height: 45px; /* Height for the three bars */
-}
-
-.bar {
+.navbar {
+  background-color: #000000;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  position: fixed; 
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 3px;
-  background-color: #333; /* Color of the hamburger lines */
-  transition: all 0.3s ease-in-out;
+  z-index: 50;
 }
 
-@media (max-width: 768px) { /* Adjust breakpoint as needed */
-  .hamburger-menu {
-    display: block; /* Show hamburger menu on smaller screens */
-  }
-
-  /* Hide regular navigation links if you have them */
-  .navbar .container > div:not(.hamburger-menu) { /* This might need adjustment based on your full navbar structure */
-     display: none;
-  }
+.company-name {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
-.menu-items {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  position: absolute;
-  top: 40px; /* Position below the button */
-  right: 0;
-  background-color: #fff; /* Background of the dropdown menu */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 5px;
-  overflow: hidden; /* To ensure rounded corners clip content */
-  max-height: 0; /* Initially hidden */
-  transition: max-height 0.3s ease-in-out; /* Smooth transition for opening/closing */
-  width: 180px; /* Width of the dropdown */
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
 }
 
-.menu-items.open {
-  max-height: 300px; /* Sufficient height to show all items */
-  padding: 10px 0; /* Add some padding when open */
-}
-
-.menu-items li {
-  margin: 0;
-}
-
-.menu-items a {
-  color: #333;
+.nav-link {
+  color: #ffffff;
   text-decoration: none;
-  padding: 10px 20px;
-  display: block; /* Make the whole area clickable */
-  transition: background-color 0.2s ease;
+  font-weight: 500;
+  transition: color 0.2s ease;
 }
 
-.menu-items a:hover {
-  background-color: #f0f0f0; /* Hover effect */
-}
-
-/* --- Hamburger Button Animation --- */
-.hamburger-button.open .bar:nth-child(1) {
-  transform: translateY(8px) rotate(45deg); /* Moves and rotates first bar */
-}
-
-.hamburger-button.open .bar:nth-child(2) {
-  opacity: 0; /* Hides the middle bar */
-}
-
-.hamburger-button.open .bar:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg); /* Moves and rotates third bar */
+.nav-link:hover {
+  color: #a0a0a0;
 }
 
 .container {
@@ -100,17 +53,6 @@
   gap: 0.5rem;
 }
 
-.navbar {
-  background-color: #fff;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
 .logo-img {
   height: 2.5rem;
   width: 2.5rem;
@@ -118,8 +60,18 @@
   object-fit: cover;
 }
 
-.company-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1f2937;
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #a0a0a0;
+}
+
+.active-link {
+  color: #05b8e0; /* A vibrant gold color for the active link */
+  font-weight: 700; /* Bolder to make it stand out */
 }
