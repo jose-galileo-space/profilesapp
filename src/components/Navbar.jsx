@@ -25,11 +25,6 @@ export default function Navbar({ isMenuOpen, setIsMenuOpen, toggleMenu }) {
 
           <ul className={`menu-items ${isMenuOpen ? "open" : ""}`}>
             <li>
-              <Link to="/timeline" onClick={() => setIsMenuOpen(false)}>
-                Timeline
-              </Link>
-            </li>
-            <li>
               <Link to="/traction" onClick={() => setIsMenuOpen(false)}>
                 Traction
               </Link>

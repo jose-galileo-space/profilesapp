@@ -13,7 +13,6 @@ export default function LearnMore() {
         setIsMenuOpen={setIsMenuOpen}
         toggleMenu={toggleMenu}
       />
-
       <div className="content-section">
         <div className="content-card">
           <h2 className="section-title">
