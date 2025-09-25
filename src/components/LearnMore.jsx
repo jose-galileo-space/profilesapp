@@ -1,4 +1,9 @@
+import React from "react";
 import "./LearnMore.css";
+import anzacComet from "../assets/comet_anzac.jpg";
+import blueStars from "../assets/blue_stars.jpg";
+import anzacSpace from "../assets/anzac_space.jpg";
+
 export default function LearnMore() {
   return (
     <div className="learn-more-page">
@@ -11,60 +16,100 @@ export default function LearnMore() {
             Next-generation Earth imaging constellation in Very Low Earth Orbit
             (VLEO).
           </p>
-          <div className="grid-container">
-            <div className="grid-item">
-              <h3 className="sub-section-title">Who We Are</h3>
-              <p className="section-text">
-                Galileo Space is a team of proven aerospace engineers and
-                innovators building the next generation of Earth imaging from
-                Very Low Earth Orbit (VLEO). We are united by one mission: to
-                push the boundaries of what’s possible in space imaging and make
-                it accessible in real time.
-              </p>
+
+          <div className="section-container">
+            <div className="section-card">
+              <div className="section-image-container">
+                <img
+                  src={anzacComet}
+                  alt="A diverse team of people collaborating"
+                  className="section-image"
+                />
+              </div>
+              <div className="section-content">
+                <h3 className="sub-section-title">Who We Are</h3>
+                <p className="section-text">
+                  Galileo Space is a team of proven aerospace engineers and
+                  innovators building the next generation of Earth imaging from
+                  Very Low Earth Orbit (VLEO). We are united by one mission: to
+                  push the boundaries of what’s possible in space imaging and
+                  make it accessible in real time.
+                </p>
+              </div>
             </div>
-            <div className="grid-item">
-              <h3 className="sub-section-title">What We Do</h3>
-              <ul className="section-text">
-                <li>
-                  <b>Design & Build:</b> Our optical experts design custom
-                  high-resolution payloads, paired with tailored spacecraft
-                  buses.
-                </li>
-                <li>
-                  <b>Integration & Testing:</b> We manage full spacecraft
-                  integration and rigorous testing on the ground and in orbit.
-                </li>
-                <li>
-                  <b>Delivery:</b> From capture to downlink, we ensure images
-                  reach end users in minutes, not days.
-                </li>
-              </ul>
+
+            <div className="section-card">
+              <div className="section-image-container">
+                <img
+                  src={blueStars}
+                  alt="A rocket launching into space"
+                  className="section-image"
+                />
+              </div>
+              <div className="section-content">
+                <h3 className="sub-section-title">What We Do</h3>
+                <ul className="section-text">
+                  <li>
+                    <b>Design & Build:</b> Our optical experts design custom
+                    high-resolution payloads, paired with tailored spacecraft
+                    buses.
+                  </li>
+                  <li>
+                    <b>Integration & Testing:</b> We manage full spacecraft
+                    integration and rigorous testing on the ground and in orbit.
+                  </li>
+                  <li>
+                    <b>Delivery:</b> From capture to downlink, we ensure images
+                    reach end users in minutes, not days.
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="vision-section">
-              <h3 className="sub-section-title">Why Galileo</h3>
-              <ul className="section-text">
-                <li>
-                  <b>Sub-30 cm Resolution:</b>Sharper imagery than most
-                  commercial providers.
-                </li>
-                <li>
-                  <b>Speed:</b> Near real-time tasking and delivery.
-                </li>
-                <li>
-                  <b>Affordability:</b>Lean, cost-efficient architecture built
-                  on COTS technology.
-                </li>
-              </ul>
+
+            <div className="section-card">
+              <div className="section-image-container">
+                <img
+                  src={anzacSpace}
+                  alt="A satellite orbiting the Earth"
+                  className="section-image"
+                />
+              </div>
+              <div className="section-content">
+                <h3 className="sub-section-title">Why Galileo</h3>
+                <ul className="section-text">
+                  <li>
+                    <b>Sub-30 cm Resolution:</b> Sharper imagery than most
+                    commercial providers.
+                  </li>
+                  <li>
+                    <b>Speed:</b> Near real-time tasking and delivery.
+                  </li>
+                  <li>
+                    <b>Affordability:</b> Lean, cost-efficient architecture
+                    built on COTS technology.
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="vision-section">
-              <h3 className="sub-section-title">The Future</h3>
-              <ul className="section-text">
-                We are shaping a world where ultra-high-resolution imagery is
-                delivered on demand. With every mission, we refine spacecraft
-                performance, partner closely with bus providers on advanced
-                attitude and orbit control, and bring our customers closer to
-                seeing Earth in real time.
-              </ul>
+
+            <div className="section-card">
+              <div className="section-image-container">
+                <img
+                  src={anzacComet}
+                  alt="Conceptual drawing of a futuristic city"
+                  className="section-image"
+                />
+              </div>
+              <div className="section-content">
+                <h3 className="sub-section-title">The Future</h3>
+                <p className="section-text">
+                  We are shaping a world where ultra-high-resolution imagery is
+                  delivered on demand. With every mission, we refine spacecraft
+                  performance, partner closely with bus providers on advanced
+                  attitude and orbit control, and bring our customers closer to
+                  seeing Earth in real time.
+                </p>
+              </div>
             </div>
           </div>
         </div>
