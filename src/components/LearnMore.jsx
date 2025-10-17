@@ -3,6 +3,7 @@ import "./LearnMore.css";
 import anzacComet from "../assets/comet_anzac.jpg";
 import blueStars from "../assets/blue_stars.jpg";
 import anzacSpace from "../assets/anzac_space.jpg";
+import nightSkyBw from "../assets/night_sky_bw.jpg";
 
 export default function LearnMore() {
   return (
@@ -38,12 +39,12 @@ export default function LearnMore() {
               </div>
             </div>
 
-            <div className="section-card">
+            <div className="section-card section-card-portrait">
               <div className="section-image-container">
                 <img
                   src={blueStars}
                   alt="A rocket launching into space"
-                  className="section-image"
+                  className="section-image section-image-portrait"
                 />
               </div>
               <div className="section-content">
@@ -55,7 +56,7 @@ export default function LearnMore() {
                     buses.
                   </li>
                   <li>
-                    <b>Integration & Testing:</b> We manage full spacecraft
+                    <b>Integration & Testing:</b> We manage full Space Vehicle
                     integration and rigorous testing on the ground and in orbit.
                   </li>
                   <li>
@@ -95,7 +96,7 @@ export default function LearnMore() {
             <div className="section-card">
               <div className="section-image-container">
                 <img
-                  src={anzacComet}
+                  src={nightSkyBw}
                   alt="Conceptual drawing of a futuristic city"
                   className="section-image"
                 />

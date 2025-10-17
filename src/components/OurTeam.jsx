@@ -42,8 +42,8 @@ export default function OurTeamPage() {
                     <b>Government & Defense Programs</b>
                     <br />
                     Contributions to U.S. Department of Defense and intelligence
-                    satellite programs, with work at Lockheed Martin, Northrop
-                    Grumman, and Booz Allen Hamilton.
+                    satellite programs, with work at Boeing, Lockheed Martin,
+                    Northrop Grumman, and Booz Allen Hamilton.
                   </li>
                   <li>
                     <b>Academic & Research Leadership</b>
@@ -64,7 +64,8 @@ export default function OurTeamPage() {
                     <b>Launch & Avionics</b>
                     <br />
                     Hardware and communications expertise from SpaceX’s Starship
-                    program, enabling spacecraft resilience and rapid iteration.
+                    and Boeing's Delta Launch programs, enabling spacecraft
+                    resilience and rapid iteration.
                   </li>
                   <li>
                     <b>Commercial Earth Observation</b>
