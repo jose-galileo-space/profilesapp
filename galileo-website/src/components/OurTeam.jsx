@@ -64,8 +64,7 @@ export default function OurTeamPage() {
                     <b>Launch & Avionics</b>
                     <br />
                     Hardware and communications expertise from SpaceX’s Starship
-                    and Boeing's Delta Launch programs, enabling spacecraft
-                    resilience and rapid iteration.
+                    enabling spacecraft resilience and rapid iteration.
                   </li>
                   <li>
                     <b>Commercial Earth Observation</b>
