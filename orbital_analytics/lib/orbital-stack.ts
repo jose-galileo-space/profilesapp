@@ -89,11 +89,35 @@ export class OrbitalStack extends cdk.Stack {
     table.grantWriteData(ingestLambda);
     rawBucket.grantPut(ingestLambda);
 
+    // 1. Look up your Hosted Zone (assumes it exists in Route53)
+    const zone = route53.HostedZone.fromLookup(this, "Zone", {
+      domainName: "galileo-space.com",
+    });
+
+    // 2. Create an HTTPS Certificate
+    const cert = new acm.Certificate(this, "ApiCert", {
+      domainName: "api.galileo-space.com",
+      validation: acm.CertificateValidation.fromDns(zone),
+    });
+
+    // 3. Update the API Definition
     const api = new apigateway.RestApi(this, "OrbitalApi", {
       deployOptions: { stageName: config.stageName },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
       },
+      // NEW: Add the domain configuration here
+      domainName: {
+        domainName: "api.galileo-space.com",
+        certificate: cert,
+      },
+    });
+
+    // 4. Create the DNS Record (A Record)
+    new route53.ARecord(this, "ApiAliasRecord", {
+      zone: zone,
+      recordName: "api", // Creates api.galileo-space.com
+      target: route53.RecordTarget.fromAlias(new targets.ApiGateway(api)),
     });
 
     const imagesResource = api.root.addResource("images");
