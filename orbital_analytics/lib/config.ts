@@ -8,7 +8,7 @@ export const StageConfigs: Record<string, OrbConfig> = {
   alpha: {
     stageName: "alpha",
     removalPolicy: "DESTROY",
-    processingMemory: 128,
+    processingMemory: 512,
   },
   beta: { stageName: "beta", removalPolicy: "RETAIN", processingMemory: 512 },
   prod: { stageName: "prod", removalPolicy: "RETAIN", processingMemory: 1024 },
