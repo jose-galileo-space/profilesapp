@@ -1,9 +1,9 @@
 import React from "react";
 import "./LearnMore.css";
-import anzacComet from "../assets/comet_anzac.jpg";
-import blueStars from "../assets/blue_stars.jpg";
-import anzacSpace from "../assets/anzac_space.jpg";
-import nightSkyBw from "../assets/night_sky_bw.jpg";
+import satelliteImage1 from "../assets/satellite_image_1.png";
+import blueStars from "../assets/satellite_image_2.png";
+import anzacSpace from "../assets/satellite_image_4.png";
+import nightSkyBw from "../assets/satellite_image_5.png";
 
 export default function LearnMore() {
   return (
@@ -22,7 +22,7 @@ export default function LearnMore() {
             <div className="section-card">
               <div className="section-image-container">
                 <img
-                  src={anzacComet}
+                  src={satelliteImage1}
                   alt="A diverse team of people collaborating"
                   className="section-image"
                 />
@@ -72,7 +72,7 @@ export default function LearnMore() {
                 <img
                   src={anzacSpace}
                   alt="A satellite orbiting the Earth"
-                  className="section-image"
+                  className="section-image section-image-portrait"
                 />
               </div>
               <div className="section-content">
