@@ -146,8 +146,11 @@ export class OrbitalStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "main.handler",
       code: lambda.Code.fromAsset("lambdas/processing/correction"),
+      timeout: cdk.Duration.seconds(60),
       memorySize: config.processingMemory,
-      environment: { DEST_BUCKET: processedBucket.bucketName },
+      environment: {
+        DEST_BUCKET: processedBucket.bucketName,
+      },
     });
 
     correctionLambda.addEventSource(new SqsEventSource(processingQueue));

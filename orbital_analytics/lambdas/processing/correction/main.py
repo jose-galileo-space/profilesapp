@@ -99,34 +99,37 @@ def handler(event, context):
             original_image = Image.open(io.BytesIO(image_content))
 
             # 3. Run Inference (Correction)
-            if ort_session:
-                # Preprocess
-                input_tensor, img_cb, img_cr = preprocess_image(original_image)
+            # if ort_session:
+            #     # Preprocess
+            #     input_tensor, img_cb, img_cr = preprocess_image(original_image)
                 
-                # INFERENCE
-                # Get input name dynamically
-                input_name = ort_session.get_inputs()[0].name
-                outputs = ort_session.run(None, {input_name: input_tensor})
+            #     # INFERENCE
+            #     # Get input name dynamically
+            #     input_name = ort_session.get_inputs()[0].name
+            #     outputs = ort_session.run(None, {input_name: input_tensor})
                 
-                # Postprocess
-                final_image = postprocess_image(outputs[0], img_cb, img_cr)
-                print("Inference complete. Image sharpened.")
-            else:
-                print("WARNING: Model not loaded. Skipping correction, just copying.")
-                final_image = original_image
+            #     # Postprocess
+            #     final_image = postprocess_image(outputs[0], img_cb, img_cr)
+            #     print("Inference complete. Image sharpened.")
+            # else:
+            #     print("WARNING: Model not loaded. Skipping correction, just copying.")
+            #     final_image = original_image
+            
+            # For now just a pass through
+            print("Skipping ML Inference (Passthrough Mode)")
 
             # 4. Upload to Processed Bucket
             # Save to memory buffer first
-            buffer = io.BytesIO()
-            final_image.save(buffer, format="JPEG", quality=95)
-            buffer.seek(0)
+            # buffer = io.BytesIO()
+            # final_image.save(buffer, format="JPEG", quality=95)
+            # buffer.seek(0)
             
             dest_key = f"processed/{owner_id}/{image_id}.jpg"
             
             s3.put_object(
                 Bucket=DEST_BUCKET,
                 Key=dest_key,
-                Body=buffer,
+                Body=image_content,
                 ContentType='image/jpeg'
             )
             print(f"Uploaded to {DEST_BUCKET}/{dest_key}")
