@@ -207,6 +207,14 @@ export class OrbitalStack extends cdk.Stack {
 
     // Trigger Analytics from Processed Bucket
     const analyticsQueue = new sqs.Queue(this, "AnalyticsQueue");
+
+    // Tell Processed Bucket to send "Object Created" events to this Queue
+    processedBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.SqsDestination(analyticsQueue),
+      { suffix: ".jpg" } // Optional: only trigger for jpgs
+    );
+
     const analyticsTrigger = new lambda.Function(this, "AnalyticsTrigger", {
       runtime: lambda.Runtime.NODEJS_20_X,
       handler: "index.handler",

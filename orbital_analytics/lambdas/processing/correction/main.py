@@ -1,9 +1,6 @@
 import json
 import os
 import boto3
-import numpy as np
-import onnxruntime as ort
-from PIL import Image
 import io
 
 # ======================================================
@@ -13,53 +10,53 @@ s3 = boto3.client('s3')
 dynamodb = boto3.client('dynamodb')
 
 # Configuration
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.onnx')
+# MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model.onnx')
 DEST_BUCKET = os.environ.get('DEST_BUCKET')
 
-print("INIT: Loading ONNX Model...")
-# We load the session HERE so it persists across invocations
-try:
-    # Use CPU provider (Lambda doesn't have GPU unless specifically configured)
-    ort_session = ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
-    print("INIT: Model loaded successfully.")
-except Exception as e:
-    print(f"INIT ERROR: Could not load model: {e}")
-    ort_session = None
+# print("INIT: Loading ONNX Model...")
+# # We load the session HERE so it persists across invocations
+# try:
+#     # Use CPU provider (Lambda doesn't have GPU unless specifically configured)
+#     ort_session = ort.InferenceSession(MODEL_PATH, providers=['CPUExecutionProvider'])
+#     print("INIT: Model loaded successfully.")
+# except Exception as e:
+#     print(f"INIT ERROR: Could not load model: {e}")
+#     ort_session = None
 
-def preprocess_image(image):
-    """
-    Convert PIL Image to Model Input (YCbCr -> Y channel extraction typically for this simple model)
-    For a generic SuperRes model, we usually process the Y (Luminance) channel.
-    """
-    # Convert to YCbCr (Luminance, Blue-diff, Red-diff)
-    img_ycbcr = image.convert('YCbCr')
-    img_y, img_cb, img_cr = img_ycbcr.split()
+# def preprocess_image(image):
+#     """
+#     Convert PIL Image to Model Input (YCbCr -> Y channel extraction typically for this simple model)
+#     For a generic SuperRes model, we usually process the Y (Luminance) channel.
+#     """
+#     # Convert to YCbCr (Luminance, Blue-diff, Red-diff)
+#     img_ycbcr = image.convert('YCbCr')
+#     img_y, img_cb, img_cr = img_ycbcr.split()
     
-    # Prepare Input Tensor (Batch Size 1, 1 Channel, Height, Width)
-    input_data = np.asarray(img_y).astype(np.float32)
-    input_data = np.expand_dims(input_data, axis=0) # Add batch dim
-    input_data = np.expand_dims(input_data, axis=0) # Add channel dim
+#     # Prepare Input Tensor (Batch Size 1, 1 Channel, Height, Width)
+#     input_data = np.asarray(img_y).astype(np.float32)
+#     input_data = np.expand_dims(input_data, axis=0) # Add batch dim
+#     input_data = np.expand_dims(input_data, axis=0) # Add channel dim
     
-    return input_data, img_cb, img_cr
+#     return input_data, img_cb, img_cr
 
-def postprocess_image(output_y, img_cb, img_cr):
-    """
-    Merge the super-resolved Y channel back with resized Cb/Cr channels
-    """
-    # Output comes out as [1, 1, H, W] -> remove dims
-    output_y = output_y[0][0]
+# def postprocess_image(output_y, img_cb, img_cr):
+#     """
+#     Merge the super-resolved Y channel back with resized Cb/Cr channels
+#     """
+#     # Output comes out as [1, 1, H, W] -> remove dims
+#     output_y = output_y[0][0]
     
-    # Clip values to valid image range 0-255
-    output_y = np.clip(output_y, 0, 255)
-    output_y = Image.fromarray(np.uint8(output_y), mode='L')
+#     # Clip values to valid image range 0-255
+#     output_y = np.clip(output_y, 0, 255)
+#     output_y = Image.fromarray(np.uint8(output_y), mode='L')
     
-    # Resize Cb and Cr to match the new Y size (Bicubic usually fine for color)
-    output_cb = img_cb.resize(output_y.size, Image.BICUBIC)
-    output_cr = img_cr.resize(output_y.size, Image.BICUBIC)
+#     # Resize Cb and Cr to match the new Y size (Bicubic usually fine for color)
+#     output_cb = img_cb.resize(output_y.size, Image.BICUBIC)
+#     output_cr = img_cr.resize(output_y.size, Image.BICUBIC)
     
-    # Merge and convert back to RGB
-    final_img = Image.merge('YCbCr', (output_y, output_cb, output_cr)).convert('RGB')
-    return final_img
+#     # Merge and convert back to RGB
+#     final_img = Image.merge('YCbCr', (output_y, output_cb, output_cr)).convert('RGB')
+#     return final_img
 
 # ======================================================
 # HANDLER (Runs for every event)
@@ -96,7 +93,7 @@ def handler(event, context):
             # 2. Download Image
             response = s3.get_object(Bucket=src_bucket, Key=src_key)
             image_content = response['Body'].read()
-            original_image = Image.open(io.BytesIO(image_content))
+            # original_image = Image.open(io.BytesIO(image_content))
 
             # 3. Run Inference (Correction)
             # if ort_session:
