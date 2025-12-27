@@ -166,7 +166,8 @@ export class OrbitalStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "main.handler",
       code: lambda.Code.fromAsset("lambdas/analytics/gemini"),
-      timeout: cdk.Duration.seconds(30),
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 1024,
       environment: {
         TABLE_NAME: table.tableName,
         GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
@@ -180,7 +181,8 @@ export class OrbitalStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "main.handler",
       code: lambda.Code.fromAsset("lambdas/analytics/object_detection"),
-      timeout: cdk.Duration.seconds(30),
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 2048,
       environment: { TABLE_NAME: table.tableName },
     });
     table.grantWriteData(objDetectLambda);

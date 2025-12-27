@@ -43,10 +43,10 @@ def handler(event, context):
 
         # 3. Call Gemini API
         # We use Gemini 1.5 Flash for speed/cost efficiency
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = """
-        You are an orbital analyst. Analyze this satellite image.
+        You are an expert orbital analyst. Analyze this satellite image.
         1. Describe the terrain (urban, rural, desert, forest).
         2. Identify key infrastructure (roads, buildings, bridges).
         3. Flag any anomalies or potential risks (flooding, fires, structural damage).
