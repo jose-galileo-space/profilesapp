@@ -15,10 +15,9 @@ class DecimalEncoder(json.JSONEncoder):
         return super(DecimalEncoder, self).default(o)
 
 def handler(event, context):
-    target_owner = "jose-test-user" # Hardcoded for now
+    target_owner = "jose-test-user"
     
     try:
-        # --- THE FIX: USE QUERY INSTEAD OF SCAN ---
         response = table.query(
             IndexName='OwnerIndex', 
             KeyConditionExpression=Key('ownerId').eq(target_owner)
@@ -26,14 +25,12 @@ def handler(event, context):
         
         items = response.get('Items', [])
         
-        # Sort in memory if needed (though GSI sorts by timestamp automatically!)
-        # items.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-
         return {
             'statusCode': 200,
+            # FIX: We REMOVED the 'Access-Control-Allow-Origin' header here.
+            # The Function URL (configured in CDK) handles it automatically.
             'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*' 
+                'Content-Type': 'application/json'
             },
             'body': json.dumps(items, cls=DecimalEncoder)
         }

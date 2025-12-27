@@ -33,9 +33,12 @@ def handler(event, context):
         # Extract IDs from key: processed/{ownerId}/{imageId}
         parts = key.split('/')
         owner_id = parts[1]
-        image_id = parts[2] # might have .jpg
+        raw_image_id = parts[2]
+        clean_image_id = raw_image_id
+        if clean_image_id.lower().endswith(('.jpg', '.jpeg', '.png')):
+            clean_image_id = clean_image_id.rsplit('.', 1)[0]
 
-        print(f"Analyzing {image_id} for {owner_id}")
+        print(f"Analyzing {clean_image_id} for {owner_id}")
 
         # 2. Download Image
         response = s3.get_object(Bucket=bucket, Key=key)
@@ -63,11 +66,10 @@ def handler(event, context):
         print(f"Gemini Analysis: {analysis_text[:100]}...")
 
         # 4. Save to DynamoDB
-        # We UPDATE the item to add the 'gemini_analysis' field
         dynamodb.update_item(
             TableName=TABLE_NAME,
             Key={
-                'imageId': {'S': image_id},
+                'imageId': {'S': clean_image_id},
                 'ownerId': {'S': owner_id}
             },
             UpdateExpression="SET gemini_analysis = :g, analysis_status = :s",

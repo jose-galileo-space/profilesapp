@@ -260,5 +260,33 @@ export class OrbitalStack extends cdk.Stack {
       "GET",
       new apigateway.LambdaIntegration(summarizerLambda)
     );
+
+    // ============================================================
+    // 7. OUTPUTS
+    // ============================================================
+    const getImagesLambda = new lambda.Function(this, "GetImagesFunc", {
+      runtime: lambda.Runtime.PYTHON_3_9,
+      code: lambda.Code.fromAsset("lambdas/api/get_images"), // Point to the folder
+      handler: "main.handler",
+      environment: {
+        TABLE_NAME: table.tableName,
+      },
+      timeout: cdk.Duration.seconds(10),
+    });
+
+    table.grantReadData(getImagesLambda);
+
+    const getImagesUrl = getImagesLambda.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE, // Public (for now)
+      cors: {
+        allowedOrigins: ["*"], // Allow your React App to talk to it
+        allowedMethods: [lambda.HttpMethod.GET],
+      },
+    });
+
+    new cdk.CfnOutput(this, "OrbitalStackGetImagesUrl", {
+      value: getImagesUrl.url,
+      description: "The Public API URL for fetching dashboard images",
+    });
   }
 }

@@ -47,9 +47,15 @@ def handler(event, context):
         print(f"Total Hits: {len(found_objects)}")
 
         parts = key.split('/')
+        owner_id = parts[1]
+        raw_image_id = parts[2]
+        clean_image_id = raw_image_id
+        if clean_image_id.lower().endswith(('.jpg', '.jpeg', '.png')):
+            clean_image_id = clean_image_id.rsplit('.', 1)[0]
         dynamodb.update_item(
             TableName=TABLE_NAME,
-            Key={'imageId': {'S': parts[2]}, 'ownerId': {'S': parts[1]}},
+            # Use clean_image_id here
+            Key={'imageId': {'S': clean_image_id}, 'ownerId': {'S': owner_id}},
             UpdateExpression="SET vehicle_data = :v, object_detect_status = :s",
             ExpressionAttributeValues={
                 ':v': {'S': json.dumps(found_objects[:50])},
