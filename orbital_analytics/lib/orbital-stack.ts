@@ -177,14 +177,22 @@ export class OrbitalStack extends cdk.Stack {
     processedBucket.grantRead(geminiLambda);
 
     // Lambda B: Object Detection (Writes to DB directly)
-    const objDetectLambda = new lambda.Function(this, "ObjDetectFunc", {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: "main.handler",
-      code: lambda.Code.fromAsset("lambdas/analytics/object_detection"),
-      timeout: cdk.Duration.seconds(180),
-      memorySize: 2048,
-      environment: { TABLE_NAME: table.tableName },
-    });
+    const objDetectLambda = new lambda.DockerImageFunction(
+      this,
+      "ObjDetectFunc",
+      {
+        code: lambda.DockerImageCode.fromImageAsset(
+          "lambdas/analytics/object_detection"
+        ),
+        memorySize: 4096,
+        timeout: cdk.Duration.seconds(300), // 5 Minutes
+        environment: {
+          TABLE_NAME: table.tableName,
+          HOME: "/tmp",
+        },
+        architecture: lambda.Architecture.X86_64,
+      }
+    );
     table.grantWriteData(objDetectLambda);
     processedBucket.grantRead(objDetectLambda);
 
