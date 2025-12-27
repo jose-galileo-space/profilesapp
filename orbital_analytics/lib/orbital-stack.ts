@@ -181,7 +181,7 @@ export class OrbitalStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "main.handler",
       code: lambda.Code.fromAsset("lambdas/analytics/object_detection"),
-      timeout: cdk.Duration.seconds(60),
+      timeout: cdk.Duration.seconds(180),
       memorySize: 2048,
       environment: { TABLE_NAME: table.tableName },
     });
