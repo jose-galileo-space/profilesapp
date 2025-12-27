@@ -38,6 +38,13 @@ export class OrbitalStack extends cdk.Stack {
           : cdk.RemovalPolicy.RETAIN,
     });
 
+    table.addGlobalSecondaryIndex({
+      indexName: "OwnerIndex", // We will use this name in the Lambda
+      partitionKey: { name: "ownerId", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "timestamp", type: dynamodb.AttributeType.STRING }, // Optional: Sort by time
+      projectionType: dynamodb.ProjectionType.ALL, // Return all attributes
+    });
+
     // TODO (jose): Add GSIs as needed.
     // GSI for Geospatial Queries (Intelligence API)
     // table.addGlobalSecondaryIndex({

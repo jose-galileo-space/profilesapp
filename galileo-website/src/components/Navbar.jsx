@@ -5,6 +5,7 @@ import "./Navbar.css";
 
 const navLinks = [
   { path: "/", name: "Home" },
+  { path: "/dashboard", name: "Dashboard" },
   { path: "/traction", name: "Traction" },
   { path: "/our-team", name: "Our Team" },
 ];
