@@ -63,7 +63,11 @@ def handler(event, context):
             }
         )
         
-        return {'status': 'done', 'found': len(found_objects)}
+        return {
+        'status': 'done', 
+        'found_count': len(found_objects),
+        'detections': found_objects  # <--- PASS THE DATA
+    }
 
     except Exception as e:
         print(f"ERROR: {e}")

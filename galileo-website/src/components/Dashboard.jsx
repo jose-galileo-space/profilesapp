@@ -68,34 +68,23 @@ const ImageCard = ({ data }) => {
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [imgError, setImgError] = useState(false);
 
-  // 1. STATUS CHECK: Look for 'COMPLETED' in either field
+  // 1. STATUS CHECK
   const processingStatus = data.object_detect_status || data.status;
+  if (processingStatus !== "COMPLETED") return null;
 
-  // If it's not completed, don't render anything (prevents "UPLOADING" clutter)
-  if (processingStatus !== "COMPLETED") {
-    return null;
-  }
-
-  // 2. PARSE DETECTIONS (Safe Logic)
-  // We define 'detections' here so it is available for the return statement below
+  // 2. PARSE DETECTIONS
   let detections = [];
   try {
-    if (!data.vehicle_data) {
-      detections = [];
-    } else if (typeof data.vehicle_data === "string") {
+    if (!data.vehicle_data) detections = [];
+    else if (typeof data.vehicle_data === "string")
       detections = JSON.parse(data.vehicle_data);
-    } else {
-      detections = data.vehicle_data;
-    }
+    else detections = data.vehicle_data;
   } catch (e) {
-    console.warn("Error parsing vehicle_data", e);
     detections = [];
   }
-  // Double check it's an array
   if (!Array.isArray(detections)) detections = [];
 
   // 3. CONSTRUCT S3 URL
-  // The ID in DB might be "abc-123", but file in S3 is "abc-123.jpg"
   let filename = data.imageId;
   if (
     !filename.toLowerCase().endsWith(".jpg") &&
@@ -103,12 +92,9 @@ const ImageCard = ({ data }) => {
   ) {
     filename += ".jpg";
   }
-
-  // Path: processed / ownerId / filename
   const fileKey = `processed/${data.ownerId}/${filename}`;
   const imageUrl = `https://${BUCKET_NAME}.s3.us-west-1.amazonaws.com/${fileKey}`;
 
-  // If the image failed to load previously, hide the card
   if (imgError) return null;
 
   return (
@@ -120,18 +106,13 @@ const ImageCard = ({ data }) => {
           onLoad={({ target: img }) =>
             setNaturalSize({ w: img.naturalWidth, h: img.naturalHeight })
           }
-          onError={() => {
-            console.warn("Failed to load image:", imageUrl);
-            setImgError(true);
-          }}
+          onError={() => setImgError(true)}
           crossOrigin="anonymous"
         />
 
-        {/* Draw Boxes */}
         {naturalSize.w > 0 &&
           detections.map((det, i) => {
             const [cx, cy, w, h] = det.box;
-            // Convert YOLO Center-XY to CSS Top-Left %
             const left = ((cx - w / 2) / naturalSize.w) * 100;
             const top = ((cy - h / 2) / naturalSize.h) * 100;
             const width = (w / naturalSize.w) * 100;
@@ -157,11 +138,21 @@ const ImageCard = ({ data }) => {
       </div>
 
       <div className="meta">
-        <h3>ID: {filename.split(".")[0].split("-")[0]}...</h3>
+        <div className="meta-header">
+          <h3>ID: {filename.split(".")[0].split("-")[0]}...</h3>
+          <div className="status-badge">● COMPLETE</div>
+        </div>
         <p>
-          <strong>Objects:</strong> {detections.length}
+          <strong>Objects Detected:</strong> {detections.length}
         </p>
-        <div className="status-badge">● ANALYSIS COMPLETE</div>
+
+        {/* --- NEW GEMINI SECTION --- */}
+        {data.gemini_analysis && (
+          <div className="analysis-report">
+            <h4>🤖 AI Mission Report:</h4>
+            <div className="report-text">{data.gemini_analysis}</div>
+          </div>
+        )}
       </div>
     </div>
   );

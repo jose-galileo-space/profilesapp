@@ -47,12 +47,30 @@ def handler(event, context):
         # 3. Call Gemini API
         # We use Gemini 1.5 Flash for speed/cost efficiency
         model = genai.GenerativeModel('gemini-2.5-flash')
-        
+
+        layer1_data = event.get('detection_results', {})
+        detections = layer1_data.get('detections', [])
+
+        intelligence_brief = "NO PRE-DETECTED OBJECTS."
+        if detections:
+            lines = []
+            for d in detections[:20]:
+                # Format: "- plane (95% conf) at box [x, y, w, h]"
+                lines.append(f"- {d['label']} ({d['confidence']} conf)")
+            
+            intelligence_brief = "PRE-DETECTED OBJECTS (Validated by Computer Vision):\n" + "\n".join(lines)
         prompt = """
         You are an expert orbital analyst. Analyze this satellite image.
-        1. Describe the terrain (urban, rural, desert, forest).
-        2. Identify key infrastructure (roads, buildings, bridges).
-        3. Flag any anomalies or potential risks (flooding, fires, structural damage).
+
+        INPUT INTELLIGENCE:
+        {intelligence_brief}
+
+        INSTRUCTIONS:
+        1. Synthesize the 'Input Intelligence' with your visual analysis.
+        2. Describe the terrain (urban, rural, desert, forest).
+        3. Identify key infrastructure (roads, buildings, bridges).
+        4. Flag any anomalies or potential risks (flooding, fires, structural damage).
+        5. Confirm if any of the pre-detected objects are of particular interest.
         Return the response in clear, concise text.
         """
         
@@ -69,13 +87,18 @@ def handler(event, context):
         dynamodb.update_item(
             TableName=TABLE_NAME,
             Key={
-                'imageId': {'S': clean_image_id},
+                'imageId': {'S': clean_image_id}, 
                 'ownerId': {'S': owner_id}
             },
-            UpdateExpression="SET gemini_analysis = :g, analysis_status = :s",
+            # Add 'status = :global_status' to the UpdateExpression
+            UpdateExpression="SET gemini_analysis = :g, analysis_status = :s, #st = :global_status",
+            ExpressionAttributeNames={
+                '#st': 'status'  # "status" is a reserved word in DynamoDB, so we use an alias
+            },
             ExpressionAttributeValues={
                 ':g': {'S': analysis_text},
-                ':s': {'S': 'COMPLETED'}
+                ':s': {'S': 'COMPLETED'},
+                ':global_status': {'S': 'COMPLETED'} # <--- THE MISSING PIECE
             }
         )
 

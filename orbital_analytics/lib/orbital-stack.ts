@@ -203,23 +203,21 @@ export class OrbitalStack extends cdk.Stack {
     table.grantWriteData(objDetectLambda);
     processedBucket.grantRead(objDetectLambda);
 
-    // Step Function Definition
+    const objDetectTask = new tasks.LambdaInvoke(this, "TaskObjDetect", {
+      lambdaFunction: objDetectLambda,
+      payloadResponseOnly: true,
+      resultPath: "$.detection_results",
+    });
+
     const geminiTask = new tasks.LambdaInvoke(this, "TaskGemini", {
       lambdaFunction: geminiLambda,
       payloadResponseOnly: true,
     });
 
-    const objDetectTask = new tasks.LambdaInvoke(this, "TaskObjDetect", {
-      lambdaFunction: objDetectLambda,
-      payloadResponseOnly: true,
-    });
-
-    const parallelAnalytics = new sfn.Parallel(this, "ParallelAnalytics")
-      .branch(geminiTask)
-      .branch(objDetectTask);
+    const definition = objDetectTask.next(geminiTask);
 
     const stateMachine = new sfn.StateMachine(this, "OrbitalStateMachine", {
-      definitionBody: sfn.DefinitionBody.fromChainable(parallelAnalytics),
+      definitionBody: sfn.DefinitionBody.fromChainable(definition),
     });
 
     // Trigger Analytics from Processed Bucket
