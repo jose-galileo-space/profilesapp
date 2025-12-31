@@ -3,7 +3,9 @@ import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { OrbitalStack } from "../lib/orbital-stack";
 import { StageConfigs } from "../lib/config";
+import * as dotenv from "dotenv";
 
+dotenv.config();
 const app = new cdk.App();
 
 // 1. Get Context (Default to alpha)
