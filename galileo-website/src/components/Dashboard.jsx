@@ -146,7 +146,6 @@ const ImageCard = ({ data }) => {
           <strong>Objects Detected:</strong> {detections.length}
         </p>
 
-        {/* --- NEW GEMINI SECTION --- */}
         {data.gemini_analysis && (
           <div className="analysis-report">
             <h4>🤖 AI Mission Report:</h4>

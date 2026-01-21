@@ -1,8 +1,10 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import galileoLogo from "../assets/galileo-logo.svg";
+
 import "./Navbar.css";
 
+const ASSET_URL = "https://d3nqo9yfgbco5y.cloudfront.net";
+const galileoLogo = `${ASSET_URL}/galileo-logo.svg`;
 const navLinks = [
   { path: "/", name: "Home" },
   { path: "/dashboard", name: "Dashboard" },

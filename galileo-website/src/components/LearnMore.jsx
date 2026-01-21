@@ -1,9 +1,11 @@
 import React from "react";
 import "./LearnMore.css";
-import satelliteImage1 from "../assets/satellite_image_1.png";
-import blueStars from "../assets/satellite_image_2.png";
-import anzacSpace from "../assets/satellite_image_4.png";
-import nightSkyBw from "../assets/satellite_image_5.png";
+
+const ASSET_URL = "https://d3nqo9yfgbco5y.cloudfront.net";
+const satelliteImage1 = `${ASSET_URL}/satellite_image_1.png`;
+const blueStars = `${ASSET_URL}/satellite_image_2.png`;
+const anzacSpace = `${ASSET_URL}/satellite_image_4.png`;
+const nightSkyBw = `${ASSET_URL}/satellite_image_5.png`;
 
 export default function LearnMore() {
   return (
