@@ -97,3 +97,27 @@
   max-height: 250px;
   overflow-y: auto;
 }
+
+.mission-briefing-container {
+  background: rgba(0, 255, 0, 0.1); /* Subtle matrix green background */
+  border: 1px solid #00ff00;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+}
+
+.briefing-label {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #00ff00;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+}
+
+.briefing-text {
+  color: #e0e0e0;
+  font-family: 'Courier New', monospace; /* Monospace for that terminal feel */
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.4;
+}
