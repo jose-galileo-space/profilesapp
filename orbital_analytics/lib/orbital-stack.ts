@@ -12,6 +12,7 @@ import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
+import * as path from 'path';
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 import { OrbConfig } from "./config";
@@ -262,14 +263,15 @@ export class OrbitalStack extends cdk.Stack {
     // ============================================================
     // 7. OUTPUTS
     // ============================================================
-    const getImagesLambda = new lambda.Function(this, "GetImagesFunc", {
-      runtime: lambda.Runtime.PYTHON_3_9,
-      code: lambda.Code.fromAsset("lambdas/api/get_images"), // Point to the folder
-      handler: "main.handler",
+    const getImagesLambda = new lambda.DockerImageFunction(this, "GetImagesFunc", {
+      code: lambda.DockerImageCode.fromImageAsset(path.join(__dirname, "../lambdas/api/get_images")),
+      architecture: lambda.Architecture.ARM_64,
       environment: {
         TABLE_NAME: table.tableName,
+        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
       },
-      timeout: cdk.Duration.seconds(10),
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(30),
     });
 
     table.grantReadData(getImagesLambda);

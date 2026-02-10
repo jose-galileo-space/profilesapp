@@ -7,7 +7,7 @@ import "./Dashboard.css";
 // -----------------------------------------------------------
 // 1. Your Lambda Function URL (from your recent cdk deploy outputs)
 const API_URL =
-  "https://x5hgt7lrfhm4pwss7kjaga25su0cxcnx.lambda-url.us-west-1.on.aws/";
+  "https://l2jl5bxtrdlcqk6tgdmqx7ixte0wqcww.lambda-url.us-west-1.on.aws/";
 
 // 2. Your S3 Bucket Name (Where the processed images live)
 const BUCKET_NAME = "orbitalstack-alpha-processedbucketde59930c-muvr8tmns0fa";
@@ -24,11 +24,7 @@ export default function Dashboard() {
     fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
-        // Sort images: newest first (optional)
-        const sorted = data.sort(
-          (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
-        );
-        setImages(sorted);
+        setImages(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -48,7 +44,7 @@ export default function Dashboard() {
       <div className="dashboard-content">
         <header className="dashboard-header">
           <h1>🛰️ Mission Dashboard</h1>
-          <p>Status: {loading ? "Scanning Satellite Feeds..." : "Online"}</p>
+          <p>Status: {loading ? "Acquiring Signal..." : "Live Feed Online"}</p>
         </header>
 
         <div className="image-grid">
@@ -62,36 +58,40 @@ export default function Dashboard() {
 }
 
 // -----------------------------------------------------------
-// COMPONENT: ImageCard
+// COMPONENT: ImageCard (Optimized)
 // -----------------------------------------------------------
 const ImageCard = ({ data }) => {
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [imgError, setImgError] = useState(false);
 
-  // 1. STATUS CHECK
-  const processingStatus = data.object_detect_status || data.status;
-  if (processingStatus !== "COMPLETED") return null;
-
-  // 2. PARSE DETECTIONS
+  // 1. PARSE DETECTIONS (Fail-safe)
   let detections = [];
   try {
-    if (!data.vehicle_data) detections = [];
-    else if (typeof data.vehicle_data === "string")
+    // Handle both stringified JSON (from DynamoDB) or raw objects
+    if (typeof data.vehicle_data === "string") {
       detections = JSON.parse(data.vehicle_data);
-    else detections = data.vehicle_data;
+    } else if (Array.isArray(data.vehicle_data)) {
+      detections = data.vehicle_data;
+    }
   } catch (e) {
+    console.warn("Failed to parse vehicle data", e);
     detections = [];
   }
-  if (!Array.isArray(detections)) detections = [];
+  
+  // Keep Top 3 logic for UI cleanliness
+  if (Array.isArray(detections)) {
+    detections = detections
+      .sort((a, b) => b.confidence - a.confidence) 
+      .slice(0, 3);
+  }
 
-  // 3. CONSTRUCT S3 URL
+  // 2. CONSTRUCT URL
   let filename = data.imageId;
-  if (
-    !filename.toLowerCase().endsWith(".jpg") &&
-    !filename.toLowerCase().endsWith(".png")
-  ) {
+  // Safety check for extension
+  if (!filename.toLowerCase().endsWith(".jpg") && !filename.toLowerCase().endsWith(".png")) {
     filename += ".jpg";
   }
+  
   const fileKey = `processed/${data.ownerId}/${filename}`;
   const imageUrl = `https://${BUCKET_NAME}.s3.us-west-1.amazonaws.com/${fileKey}`;
 
@@ -110,9 +110,12 @@ const ImageCard = ({ data }) => {
           crossOrigin="anonymous"
         />
 
+        {/* RENDER BOUNDING BOXES */}
         {naturalSize.w > 0 &&
           detections.map((det, i) => {
+            // YOLO format: [center_x, center_y, width, height]
             const [cx, cy, w, h] = det.box;
+            
             const left = ((cx - w / 2) / naturalSize.w) * 100;
             const top = ((cy - h / 2) / naturalSize.h) * 100;
             const width = (w / naturalSize.w) * 100;
@@ -127,29 +130,31 @@ const ImageCard = ({ data }) => {
                   top: `${top}%`,
                   width: `${width}%`,
                   height: `${height}%`,
+                  border: '2px solid #00ff00', 
+                  position: 'absolute' // Ensure CSS class has this
                 }}
-              >
-                <div className="label">
-                  {det.label} {Math.round(det.confidence * 100)}%
-                </div>
-              </div>
+              />
             );
           })}
       </div>
 
       <div className="meta">
         <div className="meta-header">
-          <h3>ID: {filename.split(".")[0].split("-")[0]}...</h3>
-          <div className="status-badge">● COMPLETE</div>
+          {/* Display simplified ID */}
+          <h3>ID: {filename.slice(0, 8)}...</h3> 
+          <div className="status-badge" style={{background: '#4CAF50'}}>
+             ● COMPLETE
+          </div>
         </div>
-        <p>
-          <strong>Objects Detected:</strong> {detections.length}
-        </p>
+
+        <div className="meta-stats">
+          <span>🎯 Detections: {detections.length}</span>
+        </div>
 
         {data.gemini_analysis && (
           <div className="analysis-report">
-            <h4>🤖 AI Mission Report:</h4>
-            <div className="report-text">{data.gemini_analysis}</div>
+            <h4>🤖 Tactical Analysis:</h4>
+            <p className="report-text">{data.gemini_analysis}</p>
           </div>
         )}
       </div>
