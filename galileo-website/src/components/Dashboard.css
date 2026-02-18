@@ -3,7 +3,6 @@
 }
 
 .dashboard-content {
-  /* Consolidated the padding to cleanly clear the fixed navbar */
   padding: 90px 20px 20px; 
   max-width: 1200px;
   margin: 0 auto;
@@ -36,11 +35,11 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Softened the shadow for light mode */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .image-container {
-  position: relative; /* CRITICAL for overlaying boxes */
+  position: relative;
   width: 100%;
 }
 
@@ -49,22 +48,22 @@
   display: block;
 }
 
-/* The Tactical Boxes (Kept neon green because it pops beautifully over dark satellite imagery) */
+/* Tactical Amber Boxes for Computer Vision */
 .bounding-box {
   position: absolute;
-  border: 2px solid #00ff00;
-  pointer-events: none; /* Let clicks pass through */
+  border: 2px solid #f59e0b;
+  pointer-events: none;
   box-shadow:
-    0 0 4px #00ff00,
-    inset 0 0 4px #00ff00; /* Glowing effect */
+    0 0 4px rgba(245, 158, 11, 0.8),
+    inset 0 0 4px rgba(245, 158, 11, 0.8);
 }
 
 .bounding-box .label {
   position: absolute;
   top: -22px;
   left: -2px;
-  background: #00ff00;
-  color: black;
+  background: #f59e0b;
+  color: #ffffff;
   font-size: 11px;
   font-weight: bold;
   padding: 2px 6px;
@@ -99,21 +98,19 @@
   font-size: 0.85em;
   color: var(--text-primary);
   line-height: 1.5;
-
   white-space: pre-wrap;
-
   background: var(--bg-primary);
   padding: 12px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
-
   max-height: 250px;
   overflow-y: auto;
 }
 
+/* Clean, modern Intel Briefing box */
 .mission-briefing-container {
-  background: rgba(0, 255, 0, 0.05); /* Softened opacity for light theme */
-  border: 1px solid #00ff00;
+  background: rgba(5, 184, 224, 0.05); /* Soft blue tint */
+  border: 1px solid var(--accent-blue);
   padding: 1rem;
   margin-top: 1rem;
   border-radius: 4px;
@@ -122,15 +119,36 @@
 .briefing-label {
   font-size: 0.8rem;
   font-weight: bold;
-  color: #00aa00; /* Darkened slightly so it's readable on a light background */
+  color: #03728f; /* Darker blue for visibility on light mode */
   letter-spacing: 1px;
   margin-bottom: 0.5rem;
 }
 
 .briefing-text {
   color: var(--text-primary);
-  font-family: 'Courier New', monospace; /* Monospace for that terminal feel */
+  font-family: 'Courier New', monospace;
   font-size: 1rem;
   margin: 0;
   line-height: 1.4;
+}
+
+.meta-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.meta-header h3 {
+  margin: 0;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-blue);
+  background: rgba(5, 184, 224, 0.1);
+  padding: 4px 8px;
+  border-radius: 9999px;
+  letter-spacing: 1px;
 }

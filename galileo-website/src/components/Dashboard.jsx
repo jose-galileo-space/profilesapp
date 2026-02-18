@@ -13,12 +13,21 @@ export default function Dashboard() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
+    const cachedData = sessionStorage.getItem("galileo_dashboard_cache");
+    if (cachedData) {
+      const parsed = JSON.parse(cachedData);
+      setMissionSummary(parsed.mission_summary || "No intel available.");
+      setImages(parsed.images || []);
+      setLoading(false);
+    }
+
     fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
         setMissionSummary(data.mission_summary || "No intel available.");
         setImages(data.images || []);
         setLoading(false);
+        sessionStorage.setItem("galileo_dashboard_cache", JSON.stringify(data));
       })
       .catch((err) => {
         console.error("Error fetching images:", err);
@@ -47,8 +56,6 @@ export default function Dashboard() {
 
         <div className="image-grid">
           {images.map((img) => (
-            // FIX: Removed Math.random(). Now it uses imageId.
-            // If you still see duplicates, the Backend fix above handles it.
             <ImageCard key={img.imageId} data={img} />
           ))}
         </div>
@@ -62,11 +69,8 @@ const ImageCard = ({ data }) => {
   const [naturalSize, setNaturalSize] = useState({ w: 0, h: 0 });
   const [imgError, setImgError] = useState(false);
 
-  // 1. DATA IS ALREADY CLEAN (Thanks to Python)
   const detections = data.vehicle_data || [];
   
-  // 2. PARSE ANALYSIS
-  // The backend now guarantees data.gemini_analysis is either an object or a string.
   let analysisText = "Analysis pending...";
   if (data.gemini_analysis) {
     if (typeof data.gemini_analysis === 'object') {
@@ -76,7 +80,6 @@ const ImageCard = ({ data }) => {
     }
   }
 
-  // 3. CONSTRUCT URL
   let filename = data.imageId;
   if (!filename.match(/\.(jpg|jpeg|png)$/i)) filename += ".jpg";
   const imageUrl = `https://${BUCKET_NAME}.s3.us-west-1.amazonaws.com/processed/${data.ownerId}/${filename}`;
@@ -99,6 +102,8 @@ const ImageCard = ({ data }) => {
         {naturalSize.w > 0 &&
           detections.map((det, i) => {
             const [cx, cy, w, h] = det.box;
+            
+            // Mathematical positions must stay inline
             const left = ((cx - w / 2) / naturalSize.w) * 100;
             const top = ((cy - h / 2) / naturalSize.h) * 100;
             const width = (w / naturalSize.w) * 100;
@@ -109,8 +114,10 @@ const ImageCard = ({ data }) => {
                 key={i}
                 className="bounding-box"
                 style={{
-                  left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
-                  border: '2px solid #00ff00', position: 'absolute'
+                  left: `${left}%`, 
+                  top: `${top}%`, 
+                  width: `${width}%`, 
+                  height: `${height}%`
                 }}
               />
             );
