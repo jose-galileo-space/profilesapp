@@ -1,6 +1,5 @@
-
 .navbar {
-  background-color: #000000;
+  background-color: var(--navbar-bg);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -2px rgba(0, 0, 0, 0.1);
@@ -10,30 +9,19 @@
   left: 0;
   width: 100%;
   z-index: 50;
+  box-sizing: border-box; /* Fixes width calculation issues */
 }
 
 .company-name {
-  color: #ffffff;
+  color: var(--navbar-text);
   font-size: 1.25rem;
   font-weight: 700;
 }
-
 
 .nav-links {
   display: flex;
   gap: 1.5rem;
   align-items: center;
-}
-
-.nav-link {
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
-}
-
-.nav-link:hover {
-  color: #a0a0a0;
 }
 
 .container {
@@ -61,17 +49,17 @@
 }
 
 .nav-link {
-  color: #ffffff;
+  color: var(--navbar-text);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .nav-link:hover {
-  color: #a0a0a0;
+  color: var(--accent-blue); /* Gives a nice brand pop on hover */
 }
 
 .active-link {
-  color: #05b8e0; /* A vibrant gold color for the active link */
-  font-weight: 700; /* Bolder to make it stand out */
+  color: var(--accent-blue);
+  font-weight: 700; 
 }

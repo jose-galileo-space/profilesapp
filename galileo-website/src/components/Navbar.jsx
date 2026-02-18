@@ -7,6 +7,7 @@ const ASSET_URL = "https://d3nqo9yfgbco5y.cloudfront.net";
 const galileoLogo = `${ASSET_URL}/galileo-logo.svg`;
 const navLinks = [
   { path: "/", name: "Home" },
+  { path: "/planner", name: "Mission Planner" },
   { path: "/dashboard", name: "Dashboard" },
   { path: "/traction", name: "Traction" },
   { path: "/our-team", name: "Our Team" },

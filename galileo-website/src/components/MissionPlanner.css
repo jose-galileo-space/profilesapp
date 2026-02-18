@@ -1,0 +1,213 @@
+.mission-planner-page {
+  min-height: 100vh;
+  font-family: 'Inter', -apple-system, sans-serif;
+  padding-top: 90px;
+}
+
+.planner-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.planner-header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.planner-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.planner-header p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.planner-grid {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* --- MAP SIMULATOR --- */
+.map-section {
+  background: #111;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  height: 600px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-interface {
+  width: 100%;
+  height: 100%;
+  /* Replaced neon green with a subtle Galileo Blue tint */
+  background: 
+    linear-gradient(rgba(5, 184, 224, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(5, 184, 224, 0.08) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center center;
+  cursor: crosshair;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.map-interface:hover {
+  background-color: rgba(5, 184, 224, 0.04);
+}
+
+.crosshair {
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(5, 184, 224, 0.6);
+  border-radius: 50%;
+  position: absolute;
+  pointer-events: none;
+}
+
+.crosshair::before, .crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(5, 184, 224, 0.6);
+}
+
+.crosshair::before { top: 9px; left: -10px; width: 40px; height: 1px; }
+.crosshair::after { left: 9px; top: -10px; width: 1px; height: 40px; }
+
+.map-instructions {
+  color: rgba(5, 184, 224, 0.7);
+  font-family: 'Courier New', Courier, monospace;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
+.live-coords {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent-blue);
+  color: var(--accent-blue);
+  padding: 8px 12px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  border-radius: 4px;
+}
+
+/* --- TASKING FORM --- */
+.tasking-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.tasking-card h3 {
+  margin-top: 0;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+input[type="text"], select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+input[type="text"]:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+}
+
+/* Softened terminal text */
+input[readOnly] {
+  color: var(--accent-blue);
+  font-family: 'Courier New', Courier, monospace;
+  background: #050505;
+  border: 1px solid #333;
+}
+
+.launch-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-blue);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 1rem;
+}
+
+.launch-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 0 15px rgba(5, 184, 224, 0.4);
+}
+
+.launch-btn:disabled {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  cursor: not-allowed;
+}
+
+.launch-btn.tasking {
+  background: var(--accent-blue);
+  color: #fff;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; filter: brightness(1.2); }
+  50% { opacity: 0.8; filter: brightness(0.8); }
+  100% { opacity: 1; filter: brightness(1.2); }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .planner-grid {
+    grid-template-columns: 1fr;
+  }
+  .map-section {
+    height: 400px;
+  }
+}

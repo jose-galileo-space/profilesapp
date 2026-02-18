@@ -1,19 +1,28 @@
 .dashboard-page {
-  background-color: #0d0d0d;
-  color: #fff;
   min-height: 100vh;
 }
 
 .dashboard-content {
-  padding: 80px 20px 20px; /* Top padding to clear the fixed navbar */
+  /* Consolidated the padding to cleanly clear the fixed navbar */
+  padding: 90px 20px 20px; 
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .dashboard-header {
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 30px;
   padding-bottom: 10px;
+}
+
+.dashboard-header h1 {
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.dashboard-header p {
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .image-grid {
@@ -23,11 +32,11 @@
 }
 
 .card {
-  background: #1a1a1a;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid #333;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Softened the shadow for light mode */
 }
 
 .image-container {
@@ -40,7 +49,7 @@
   display: block;
 }
 
-/* The Green/Orange Boxes */
+/* The Tactical Boxes (Kept neon green because it pops beautifully over dark satellite imagery) */
 .bounding-box {
   position: absolute;
   border: 2px solid #00ff00;
@@ -64,18 +73,22 @@
 
 .meta {
   padding: 15px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border-color);
+}
+
+.meta h3, .analysis-report h4, .report-text {
+  color: var(--text-primary);
 }
 
 .analysis-report {
   margin-top: 15px;
   padding-top: 15px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--border-color);
 }
 
 .analysis-report h4 {
   margin: 0 0 8px 0;
-  color: #aaa;
+  color: var(--text-secondary);
   font-size: 0.9em;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -84,22 +97,22 @@
 .report-text {
   font-family: "Courier New", monospace;
   font-size: 0.85em;
-  color: #e0e0e0;
+  color: var(--text-primary);
   line-height: 1.5;
 
   white-space: pre-wrap;
 
-  background: #1a1a1a;
+  background: var(--bg-primary);
   padding: 12px;
   border-radius: 6px;
-  border: 1px solid #333;
+  border: 1px solid var(--border-color);
 
   max-height: 250px;
   overflow-y: auto;
 }
 
 .mission-briefing-container {
-  background: rgba(0, 255, 0, 0.1); /* Subtle matrix green background */
+  background: rgba(0, 255, 0, 0.05); /* Softened opacity for light theme */
   border: 1px solid #00ff00;
   padding: 1rem;
   margin-top: 1rem;
@@ -109,13 +122,13 @@
 .briefing-label {
   font-size: 0.8rem;
   font-weight: bold;
-  color: #00ff00;
+  color: #00aa00; /* Darkened slightly so it's readable on a light background */
   letter-spacing: 1px;
   margin-bottom: 0.5rem;
 }
 
 .briefing-text {
-  color: #e0e0e0;
+  color: var(--text-primary);
   font-family: 'Courier New', monospace; /* Monospace for that terminal feel */
   font-size: 1rem;
   margin: 0;
