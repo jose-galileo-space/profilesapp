@@ -216,21 +216,45 @@ export default function MissionPlanner() {
     });
   }, [box]);
 
-  const handleLaunchMission = (e) => {
+const handleLaunchMission = async (e) => {
     e.preventDefault();
     setIsTasking(true);
 
+    // 1. Format the payload for the backend
     const payload = { 
       targetName, 
       polygon: corners.map(c => [Number(c.lat.toFixed(4)), Number(c.lng.toFixed(4))]), 
       focusArea 
     };
 
-    setTimeout(() => {
-      console.log("Mission Tasked:", payload);
+    try {
+      // 2. Send the POST request to your AWS endpoint
+      // NOTE: Replace this URL with your actual ingestion endpoint if different
+      const API_URL = "https://l2jl5bxtrdlcqk6tgdmqx7ixte0wqcww.lambda-url.us-west-1.on.aws/";
+      
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AWS API Error: ${response.status}`);
+      }
+
+      console.log("Mission Tasked Successfully:", payload);
+      
+      // 3. Clear the tasking state and redirect
       setIsTasking(false);
       navigate("/dashboard");
-    }, 1500);
+
+    } catch (error) {
+      console.error("Tasking failed:", error);
+      setIsTasking(false);
+      alert("Failed to upload commands to satellite. Check console for details.");
+    }
   };
 
   return (
