@@ -230,7 +230,7 @@ const handleLaunchMission = async (e) => {
     try {
       // 2. Send the POST request to your AWS endpoint
       // NOTE: Replace this URL with your actual ingestion endpoint if different
-      const API_URL = "https://l2jl5bxtrdlcqk6tgdmqx7ixte0wqcww.lambda-url.us-west-1.on.aws/";
+      const API_URL = "https://api.galileo-space.com/task";
       
       const response = await fetch(API_URL, {
         method: "POST",

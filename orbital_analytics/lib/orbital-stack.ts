@@ -13,6 +13,7 @@ import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as path from 'path';
+import * as iam from "aws-cdk-lib/aws-iam";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
 import { OrbConfig } from "./config";
@@ -258,6 +259,37 @@ export class OrbitalStack extends cdk.Stack {
     summaryResource.addMethod(
       "GET",
       new apigateway.LambdaIntegration(summarizerLambda)
+    );
+
+    // ============================================================
+    // 6.5 SATELLITE TASKING (IoT Core Relay)
+    // ============================================================
+    const taskingLambda = new lambda.Function(this, "TaskingLambda", {
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: "index.handler",
+      code: lambda.Code.fromAsset("lambdas/tasking"),
+      environment: {
+        // IMPORTANT: Paste that exact ATS endpoint you found earlier here
+        IOT_ENDPOINT: "YOUR_AWS_IOT_ENDPOINT-ats.iot.us-west-1.amazonaws.com",
+      },
+    });
+
+    // Give the Lambda security clearance to broadcast to IoT Core
+    taskingLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["iot:Publish"],
+        resources: [
+          `arn:aws:iot:${this.region}:${this.account}:topic/galileo/missions/tasking`
+        ],
+      })
+    );
+
+    // Attach it to your existing API Gateway at api.galileo-space.com/task
+    const taskResource = api.root.addResource("task");
+    taskResource.addMethod(
+      "POST",
+      new apigateway.LambdaIntegration(taskingLambda)
     );
 
     // ============================================================
