@@ -3,6 +3,8 @@ import Navbar from "../components/Navbar";
 import "./Dashboard.css";
 
 // CONFIGURATION
+// 💡 Reminder: You might want to update this to your new API Gateway URL!
+// e.g., const API_URL = "https://api.galileo-space.com/images";
 const API_URL = "https://l2jl5bxtrdlcqk6tgdmqx7ixte0wqcww.lambda-url.us-west-1.on.aws/";
 const BUCKET_NAME = "orbitalstack-alpha-processedbucketde59930c-muvr8tmns0fa";
 
@@ -12,27 +14,40 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const cachedData = sessionStorage.getItem("galileo_dashboard_cache");
-    if (cachedData) {
-      const parsed = JSON.parse(cachedData);
-      setMissionSummary(parsed.mission_summary || "No intel available.");
-      setImages(parsed.images || []);
-      setLoading(false);
+  // 1. Extract the fetching logic into a reusable function
+  const fetchIntel = (forceRefresh = false) => {
+    setLoading(true);
+
+    // If we aren't forcing a refresh, try to use the cache for instant loading
+    if (!forceRefresh) {
+      const cachedData = sessionStorage.getItem("galileo_dashboard_cache");
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData);
+        setMissionSummary(parsed.mission_summary || "No intel available.");
+        setImages(parsed.images || []);
+        setLoading(false);
+      }
     }
 
+    // 2. Fetch fresh data from AWS
     fetch(API_URL)
       .then((res) => res.json())
       .then((data) => {
         setMissionSummary(data.mission_summary || "No intel available.");
         setImages(data.images || []);
         setLoading(false);
+        // Overwrite the cache with the newest data
         sessionStorage.setItem("galileo_dashboard_cache", JSON.stringify(data));
       })
       .catch((err) => {
         console.error("Error fetching images:", err);
         setLoading(false);
       });
+  };
+
+  // 3. Run it once when the component mounts
+  useEffect(() => {
+    fetchIntel(false);
   }, []);
 
   return (
@@ -45,11 +60,33 @@ export default function Dashboard() {
 
       <div className="dashboard-content">
         <header className="dashboard-header">
-          <h1>🛰️ Mission Dashboard</h1>
+          {/* 4. Group the Title and Button together */}
+          <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "15px" }}>
+            <h1 style={{ margin: 0 }}>🛰️ Mission Dashboard</h1>
+            
+            <button 
+              onClick={() => fetchIntel(true)}
+              disabled={loading}
+              style={{
+                background: loading ? "#333" : "transparent",
+                color: loading ? "#888" : "#05b8e0",
+                border: `1px solid ${loading ? "#333" : "#05b8e0"}`,
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: loading ? "not-allowed" : "pointer",
+                fontWeight: "bold",
+                fontFamily: "monospace",
+                transition: "all 0.2s ease-in-out"
+              }}
+            >
+              {loading ? "📡 SYNCING..." : "↻ REFRESH INTEL"}
+            </button>
+          </div>
+
           <div className="mission-briefing-container">
             <div className="briefing-label">⚡ INTEL UPDATE</div>
             <p className="briefing-text">
-              {loading ? "Creating summary report..." : missionSummary}
+              {loading && !images.length ? "Connecting to satellite downlink..." : missionSummary}
             </p>
           </div>
         </header>

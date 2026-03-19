@@ -270,7 +270,7 @@ export class OrbitalStack extends cdk.Stack {
       code: lambda.Code.fromAsset("lambdas/tasking"),
       environment: {
         // IMPORTANT: Paste that exact ATS endpoint you found earlier here
-        IOT_ENDPOINT: "YOUR_AWS_IOT_ENDPOINT-ats.iot.us-west-1.amazonaws.com",
+        IOT_ENDPOINT: "a1mjxt17dps8on-ats.iot.us-west-1.amazonaws.com",
       },
     });
 
