@@ -162,6 +162,7 @@ export default function MissionPlanner() {
 
   const [targetName, setTargetName] = useState("");
   const [focusArea, setFocusArea] = useState("all");
+  const [captureMode, setCaptureMode] = useState("simulated"); // NEW STATE
   const [isTasking, setIsTasking] = useState(false);
   const [isEditing, setIsEditing] = useState(true);
 
@@ -216,20 +217,20 @@ export default function MissionPlanner() {
     });
   }, [box]);
 
-const handleLaunchMission = async (e) => {
+  const handleLaunchMission = async (e) => {
     e.preventDefault();
     setIsTasking(true);
 
-    // 1. Format the payload for the backend
+    // 1. Format the payload for the backend (ADDED CAPTURE MODE)
     const payload = { 
       targetName, 
       polygon: corners.map(c => [Number(c.lat.toFixed(4)), Number(c.lng.toFixed(4))]), 
-      focusArea 
+      focusArea,
+      captureMode 
     };
 
     try {
       // 2. Send the POST request to your AWS endpoint
-      // NOTE: Replace this URL with your actual ingestion endpoint if different
       const API_URL = "https://api.galileo-space.com/task";
       
       const response = await fetch(API_URL, {
@@ -342,10 +343,44 @@ const handleLaunchMission = async (e) => {
                   </select>
                 </div>
 
+                {/* NEW: CAPTURE MODE TOGGLE */}
+                <div className="form-group">
+                  <label>Hardware Capture Mode</label>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setCaptureMode("simulated")}
+                      style={{
+                        flex: 1, padding: "10px", fontWeight: "bold", cursor: "pointer",
+                        background: captureMode === "simulated" ? "#05b8e0" : "transparent",
+                        color: captureMode === "simulated" ? "#000" : "#05b8e0",
+                        border: "1px solid #05b8e0", borderRadius: "4px",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      🧪 Spoof (Test Image)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCaptureMode("real")}
+                      style={{
+                        flex: 1, padding: "10px", fontWeight: "bold", cursor: "pointer",
+                        background: captureMode === "real" ? "#e0053a" : "transparent",
+                        color: captureMode === "real" ? "#fff" : "#e0053a",
+                        border: "1px solid #e0053a", borderRadius: "4px",
+                        transition: "all 0.2s ease"
+                      }}
+                    >
+                      📷 Real Hardware
+                    </button>
+                  </div>
+                </div>
+
                 <button
                   type="submit"
                   className={`launch-btn ${isTasking ? "tasking" : ""}`}
                   disabled={isTasking || !targetName}
+                  style={{ marginTop: "20px" }}
                 >
                   {isTasking ? "UPLOADING COMMANDS..." : "INITIALIZE SURVEILLANCE"}
                 </button>

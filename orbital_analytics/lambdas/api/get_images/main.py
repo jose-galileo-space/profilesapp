@@ -68,8 +68,8 @@ def handler(event, context):
 
             # C. THE "OLD DATA" FILTER
             # Must have Gemini Analysis AND Objects to be useful
-            has_analysis = item.get('gemini_analysis')
-            has_objects = item.get('vehicle_data') and len(item['vehicle_data']) > 0
+            has_analysis = item.get('gemini_analysis') is not None
+            has_objects = item.get('vehicle_data') is not None
 
             if not has_analysis or not has_objects:
                 continue 
