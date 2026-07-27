@@ -64,12 +64,22 @@ User Upload
 
 ---
 
-## Environment Variables Required at Deploy
+## Deploy + Secrets (TideWatch E2)
+
+The Gemini API key now lives in AWS Secrets Manager (`GeminiApiKey`), not in a
+plaintext Lambda env var. Deploy the stack, then populate the secret once:
 
 ```bash
-export GOOGLE_API_KEY=<gemini-api-key>
 npx cdk deploy --context stage=alpha --profile serrano-dev
+# grab the GeminiApiKey secret ARN from the console/outputs, then:
+aws secretsmanager put-secret-value \
+  --secret-id <GeminiApiKey-arn> \
+  --secret-string '{"GOOGLE_API_KEY":"<gemini-api-key>"}' \
+  --profile serrano-dev
 ```
+
+Handlers read the key from the secret at cold start (env var `GEMINI_SECRET_ARN`).
+`GOOGLE_API_KEY` as an env var is now only a local/dev fallback, never required at deploy.
 
 ---
 
@@ -84,7 +94,7 @@ npx cdk deploy --context stage=alpha --profile serrano-dev
 | Reports Engine (v2) | Low | Many-to-many image→report, `POST /reports/{id}/analyze` |
 | Parallel Step Functions | Low | Fan-out: ObjDetect \|\| RF Analysis \|\| Thermal |
 | GeoIndex on DynamoDB | Low | `geoHash` GSI commented out in stack |
-| Auth on GetImagesFunc | Low | Hardcoded `jose-test-user` — needs Cognito |
+| ~~Auth on GetImagesFunc~~ | Done (E3b) | Cognito authorizer + `GET /v1/images`; public Function URL removed; tenant from JWT claim. `/task` also protected. Legacy `/images`+`/summary` still open pending frontend migration. |
 
 ---
 

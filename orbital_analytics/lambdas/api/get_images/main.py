@@ -10,8 +10,30 @@ import google.generativeai as genai
 # ---------------------------------------------------------
 dynamodb = boto3.resource('dynamodb')
 TABLE_NAME = os.environ.get('TABLE_NAME')
-GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 table = dynamodb.Table(TABLE_NAME)
+
+
+def _load_api_key():
+    """Read the Gemini key from Secrets Manager (GEMINI_SECRET_ARN), falling
+    back to the GOOGLE_API_KEY env var for local/dev. Cached at cold start."""
+    arn = os.environ.get('GEMINI_SECRET_ARN')
+    if arn:
+        try:
+            val = boto3.client('secretsmanager').get_secret_value(
+                SecretId=arn)['SecretString']
+            try:
+                parsed = json.loads(val)
+                if isinstance(parsed, dict):
+                    return parsed.get('GOOGLE_API_KEY') or parsed.get('apiKey') or val
+            except (ValueError, TypeError):
+                pass
+            return val
+        except Exception as e:  # noqa: BLE001
+            print(f"WARN: could not load secret {arn}: {e}")
+    return os.environ.get('GOOGLE_API_KEY')
+
+
+GOOGLE_API_KEY = _load_api_key()
 
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
@@ -22,9 +44,19 @@ class DecimalEncoder(json.JSONEncoder):
             return float(o)
         return super(DecimalEncoder, self).default(o)
 
+def _tenant_id(event):
+    """Tenant from the Cognito JWT claim injected by the API Gateway authorizer
+    (custom:tenantId, else sub). Falls back to the legacy owner only for direct
+    invokes with no authorizer context (not reachable via the deployed route)."""
+    rc = event.get("requestContext") or {}
+    claims = (rc.get("authorizer") or {}).get("claims") or {}
+    tenant = claims.get("custom:tenantId") or claims.get("sub")
+    return tenant or "jose-test-user"
+
+
 def handler(event, context):
-    target_owner = "jose-test-user" # TODO: Auth
-    
+    target_owner = _tenant_id(event)
+
     try:
         # 1. FETCH EVERYTHING
         response = table.query(
@@ -160,7 +192,10 @@ def handler(event, context):
 
         return {
             'statusCode': 200,
-            'headers': { 'Content-Type': 'application/json' },
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
             'body': json.dumps({
                 "mission_summary": mission_summary,
                 "focus_classes": relevant_labels,

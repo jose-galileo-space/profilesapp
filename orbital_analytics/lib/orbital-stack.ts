@@ -14,9 +14,14 @@ import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as path from 'path';
 import * as iam from "aws-cdk-lib/aws-iam";
-import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as cognito from "aws-cdk-lib/aws-cognito";
+import {
+  SqsEventSource,
+  DynamoEventSource,
+} from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
-import { OrbConfig } from "./config";
+import { OrbConfig, ApiTiers } from "./config";
 
 export class OrbitalStack extends cdk.Stack {
   constructor(
@@ -55,6 +60,28 @@ export class OrbitalStack extends cdk.Stack {
     //   sortKey: { name: "timestamp", type: dynamodb.AttributeType.STRING },
     // });
 
+    // CoreTable: single-table store for TideWatch product entities
+    // (Tenant, AOI, Observation, Report, Usage). See product_loop/DATA_MODEL.md.
+    // OrbTable stays the image/detection store; CoreTable holds everything else.
+    const coreTable = new dynamodb.Table(this, "CoreTable", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "sk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      // Stream feeds the alerting evaluator (E5) on new Observations.
+      stream: dynamodb.StreamViewType.NEW_IMAGE,
+      removalPolicy:
+        config.removalPolicy === "DESTROY"
+          ? cdk.RemovalPolicy.DESTROY
+          : cdk.RemovalPolicy.RETAIN,
+    });
+
+    coreTable.addGlobalSecondaryIndex({
+      indexName: "GSI1",
+      partitionKey: { name: "gsi1pk", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "gsi1sk", type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     // ============================================================
     // 2. STORAGE LAYER
     // ============================================================
@@ -80,6 +107,53 @@ export class OrbitalStack extends cdk.Stack {
           : cdk.RemovalPolicy.RETAIN,
       eventBridgeEnabled: true,
     });
+
+    // ============================================================
+    // 2.5 SECRETS (TideWatch E2)
+    // GeminiApiKey holds the Gemini API key. The value is populated
+    // out-of-band by an operator (never in code or the CFN template):
+    //   aws secretsmanager put-secret-value \
+    //     --secret-id <arn> --secret-string '{"GOOGLE_API_KEY":"..."}'
+    // Handlers read it at cold start (with a GOOGLE_API_KEY env fallback for
+    // local/dev). This removes the plaintext key from every Lambda env var.
+    // ============================================================
+    const geminiApiKeySecret = new secretsmanager.Secret(this, "GeminiApiKey", {
+      description: "Gemini API key for TideWatch analytics Lambdas",
+      removalPolicy:
+        config.removalPolicy === "DESTROY"
+          ? cdk.RemovalPolicy.DESTROY
+          : cdk.RemovalPolicy.RETAIN,
+    });
+
+    // ============================================================
+    // 2.6 AUTH (Cognito) — TideWatch E3a
+    // Multi-tenant identity. Each user carries a custom:tenantId attribute;
+    // the API Gateway Cognito authorizer passes JWT claims to handlers, which
+    // scope every read/write by that tenant. Replaces the x-tenant-id scaffold
+    // for the /v1 product surface. (E3b migrates the legacy routes + GetImages.)
+    // ============================================================
+    const userPool = new cognito.UserPool(this, "TideWatchUserPool", {
+      selfSignUpEnabled: false, // tenants are provisioned, not self-serve (yet)
+      signInAliases: { email: true },
+      standardAttributes: { email: { required: true, mutable: false } },
+      customAttributes: {
+        tenantId: new cognito.StringAttribute({ mutable: true }),
+      },
+      removalPolicy:
+        config.removalPolicy === "DESTROY"
+          ? cdk.RemovalPolicy.DESTROY
+          : cdk.RemovalPolicy.RETAIN,
+    });
+
+    const userPoolClient = userPool.addClient("TideWatchWebClient", {
+      authFlows: { userSrp: true, userPassword: true },
+    });
+
+    const apiAuthorizer = new apigateway.CognitoUserPoolsAuthorizer(
+      this,
+      "TideWatchAuthorizer",
+      { cognitoUserPools: [userPool] }
+    );
 
     // ============================================================
     // 3. INGESTION API
@@ -111,7 +185,12 @@ export class OrbitalStack extends cdk.Stack {
 
     // 3. Update the API Definition
     const api = new apigateway.RestApi(this, "OrbitalApi", {
-      deployOptions: { stageName: config.stageName },
+      deployOptions: {
+        stageName: config.stageName,
+        // Stage-level default throttle: baseline abuse protection (E7).
+        throttlingRateLimit: config.apiRateLimit,
+        throttlingBurstLimit: config.apiBurstLimit,
+      },
       defaultCorsPreflightOptions: {
         allowOrigins: apigateway.Cors.ALL_ORIGINS,
       },
@@ -129,11 +208,155 @@ export class OrbitalStack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(new targets.ApiGateway(api)),
     });
 
+    // Legacy ingest endpoint — now Cognito-protected (SECURITY_REVIEW F1).
+    // No anonymous writes into the pipeline.
     const imagesResource = api.root.addResource("images");
     imagesResource.addMethod(
       "POST",
-      new apigateway.LambdaIntegration(ingestLambda)
+      new apigateway.LambdaIntegration(ingestLambda),
+      {
+        authorizer: apiAuthorizer,
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+      }
     );
+
+    // ============================================================
+    // 3.5 AOI MANAGEMENT API (TideWatch E1)
+    // Versioned /v1 surface. Auth (E3) will add a Cognito authorizer;
+    // today tenancy comes from the x-tenant-id header (scaffold).
+    // ============================================================
+    const aoiLambda = new lambda.Function(this, "AoiFunc", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "main.handler",
+      code: lambda.Code.fromAsset("lambdas/api/aoi"),
+      environment: {
+        CORE_TABLE_NAME: coreTable.tableName,
+      },
+    });
+    coreTable.grantReadWriteData(aoiLambda);
+
+    const v1 = api.root.addResource("v1");
+    const aoisResource = v1.addResource("aois");
+    const aoiIntegration = new apigateway.LambdaIntegration(aoiLambda);
+    // Every /v1/aois route requires a valid Cognito JWT; the handler reads
+    // tenantId from the token claims.
+    const aoiAuth: apigateway.MethodOptions = {
+      authorizer: apiAuthorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    };
+    aoisResource.addMethod("GET", aoiIntegration, aoiAuth); // list
+    aoisResource.addMethod("POST", aoiIntegration, aoiAuth); // create
+    const aoiByIdResource = aoisResource.addResource("{aoiId}");
+    aoiByIdResource.addMethod("GET", aoiIntegration, aoiAuth); // get one
+    aoiByIdResource.addMethod("DELETE", aoiIntegration, aoiAuth); // delete
+
+    // Activity: per-AOI vessel-count time series + week-over-week delta (E4).
+    // Reads Observation rows written by the analytics step.
+    const activityLambda = new lambda.Function(this, "ActivityFunc", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "main.handler",
+      code: lambda.Code.fromAsset("lambdas/api/activity"),
+      environment: {
+        CORE_TABLE_NAME: coreTable.tableName,
+      },
+    });
+    coreTable.grantReadData(activityLambda);
+    const activityResource = aoiByIdResource.addResource("activity");
+    activityResource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(activityLambda),
+      aoiAuth
+    );
+
+    // ============================================================
+    // 3.6 ALERTING (TideWatch E5)
+    // New Observations stream from CoreTable into AlertsFunc, which evaluates
+    // each AOI's alertRules (max/min/surge) and publishes fired alerts to SNS.
+    // Operators subscribe email/HTTPS endpoints to the topic out-of-band.
+    // ============================================================
+    const alertsTopic = new sns.Topic(this, "TideWatchAlerts", {
+      displayName: "TideWatch AOI Alerts",
+    });
+
+    const alertsLambda = new lambda.Function(this, "AlertsFunc", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "main.handler",
+      code: lambda.Code.fromAsset("lambdas/alerting"),
+      environment: {
+        CORE_TABLE_NAME: coreTable.tableName,
+        ALERTS_TOPIC_ARN: alertsTopic.topicArn,
+        // AIS dark-vessel cross-reference (E8): off | stub | http.
+        // "off" until a real AIS provider is wired, so no fabricated signals.
+        AIS_MODE: "off",
+      },
+    });
+    coreTable.grantReadData(alertsLambda); // load AOI rules + trailing history
+    alertsTopic.grantPublish(alertsLambda);
+    alertsLambda.addEventSource(
+      new DynamoEventSource(coreTable, {
+        startingPosition: lambda.StartingPosition.TRIM_HORIZON,
+        batchSize: 10,
+        retryAttempts: 2,
+        // Only Observation inserts matter; the handler also re-checks.
+        filters: [
+          lambda.FilterCriteria.filter({
+            eventName: lambda.FilterRule.isEqual("INSERT"),
+          }),
+        ],
+      })
+    );
+
+    new cdk.CfnOutput(this, "AlertsTopicArn", {
+      value: alertsTopic.topicArn,
+      description: "Subscribe email/HTTPS endpoints here to receive AOI alerts",
+    });
+
+    // ============================================================
+    // 3.7 REPORTS ENGINE (TideWatch E6 — DESIGN v2)
+    // Curated intelligence reports: select AOIs + prompt -> Gemini synthesis
+    // grounded in measured activity. Docker image (needs google-generativeai),
+    // same pattern as GetImagesFunc.
+    // ============================================================
+    const reportsLambda = new lambda.DockerImageFunction(this, "ReportsFunc", {
+      code: lambda.DockerImageCode.fromImageAsset(
+        path.join(__dirname, "../lambdas/api/reports")
+      ),
+      architecture: lambda.Architecture.ARM_64,
+      environment: {
+        CORE_TABLE_NAME: coreTable.tableName,
+        GEMINI_SECRET_ARN: geminiApiKeySecret.secretArn,
+      },
+      memorySize: 512,
+      timeout: cdk.Duration.seconds(30),
+    });
+    coreTable.grantReadWriteData(reportsLambda);
+    geminiApiKeySecret.grantRead(reportsLambda);
+
+    // Usage / metering read endpoint (E9). Counters are written inline by the
+    // billable-event handlers (GeminiFunc scenes, ReportsFunc reports, AoiFunc
+    // AOIs) via atomic ADD; this just reads them back per tenant.
+    const usageLambda = new lambda.Function(this, "UsageFunc", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "main.handler",
+      code: lambda.Code.fromAsset("lambdas/api/usage"),
+      environment: { CORE_TABLE_NAME: coreTable.tableName },
+    });
+    coreTable.grantReadData(usageLambda);
+    v1.addResource("usage").addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(usageLambda),
+      aoiAuth
+    );
+
+    const reportsIntegration = new apigateway.LambdaIntegration(reportsLambda);
+    const reportsResource = v1.addResource("reports");
+    reportsResource.addMethod("GET", reportsIntegration, aoiAuth); // list
+    reportsResource.addMethod("POST", reportsIntegration, aoiAuth); // create
+    const reportByIdResource = reportsResource.addResource("{reportId}");
+    reportByIdResource.addMethod("GET", reportsIntegration, aoiAuth); // get one
+    reportByIdResource
+      .addResource("analyze")
+      .addMethod("POST", reportsIntegration, aoiAuth); // synthesize
 
     // ============================================================
     // 4. PROCESSING LAYER (Sequential)
@@ -179,11 +402,14 @@ export class OrbitalStack extends cdk.Stack {
       memorySize: 1024,
       environment: {
         TABLE_NAME: table.tableName,
-        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
+        CORE_TABLE_NAME: coreTable.tableName,
+        GEMINI_SECRET_ARN: geminiApiKeySecret.secretArn,
       },
     });
-    table.grantWriteData(geminiLambda);
+    table.grantReadWriteData(geminiLambda); // read aoiId + write analysis (E4)
+    coreTable.grantWriteData(geminiLambda); // write AOI observations (E4)
     processedBucket.grantRead(geminiLambda);
+    geminiApiKeySecret.grantRead(geminiLambda);
 
     // Lambda B: Object Detection (Writes to DB directly)
     const objDetectLambda = new lambda.DockerImageFunction(
@@ -250,15 +476,21 @@ export class OrbitalStack extends cdk.Stack {
       code: lambda.Code.fromAsset("lambdas/intelligence"),
       environment: {
         TABLE_NAME: table.tableName,
-        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
+        GEMINI_SECRET_ARN: geminiApiKeySecret.secretArn,
       },
     });
     table.grantReadData(summarizerLambda);
+    geminiApiKeySecret.grantRead(summarizerLambda);
 
+    // Legacy summary endpoint — now Cognito-protected (SECURITY_REVIEW F1).
     const summaryResource = api.root.addResource("summary");
     summaryResource.addMethod(
       "GET",
-      new apigateway.LambdaIntegration(summarizerLambda)
+      new apigateway.LambdaIntegration(summarizerLambda),
+      {
+        authorizer: apiAuthorizer,
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+      }
     );
 
     // ============================================================
@@ -285,11 +517,16 @@ export class OrbitalStack extends cdk.Stack {
       })
     );
 
-    // Attach it to your existing API Gateway at api.galileo-space.com/task
+    // Satellite tasking publishes to IoT Core — a privileged action that must
+    // never be anonymous. Protect it with the Cognito authorizer (E3b).
     const taskResource = api.root.addResource("task");
     taskResource.addMethod(
       "POST",
-      new apigateway.LambdaIntegration(taskingLambda)
+      new apigateway.LambdaIntegration(taskingLambda),
+      {
+        authorizer: apiAuthorizer,
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+      }
     );
 
     // ============================================================
@@ -300,25 +537,58 @@ export class OrbitalStack extends cdk.Stack {
       architecture: lambda.Architecture.ARM_64,
       environment: {
         TABLE_NAME: table.tableName,
-        GOOGLE_API_KEY: process.env.GOOGLE_API_KEY!,
+        GEMINI_SECRET_ARN: geminiApiKeySecret.secretArn,
       },
       memorySize: 512,
       timeout: cdk.Duration.seconds(30),
     });
 
     table.grantReadData(getImagesLambda);
+    geminiApiKeySecret.grantRead(getImagesLambda);
 
-    const getImagesUrl = getImagesLambda.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.NONE, // Public (for now)
-      cors: {
-        allowedOrigins: ["*"], // Allow your React App to talk to it
-        allowedMethods: [lambda.HttpMethod.GET],
-      },
+    // E3b: GetImagesFunc is no longer a public Function URL. It sits behind
+    // API Gateway at GET /v1/images with the Cognito authorizer, so the
+    // dashboard must send a JWT and the handler scopes results to the token's
+    // tenant (no more hardcoded jose-test-user).
+    const imagesV1Resource = v1.addResource("images");
+    imagesV1Resource.addMethod(
+      "GET",
+      new apigateway.LambdaIntegration(getImagesLambda),
+      {
+        authorizer: apiAuthorizer,
+        authorizationType: apigateway.AuthorizationType.COGNITO,
+      }
+    );
+
+    new cdk.CfnOutput(this, "TideWatchImagesEndpoint", {
+      value: `https://api.galileo-space.com/v1/images`,
+      description: "Authenticated dashboard images endpoint (Cognito JWT required)",
     });
 
-    new cdk.CfnOutput(this, "OrbitalStackGetImagesUrl", {
-      value: getImagesUrl.url,
-      description: "The Public API URL for fetching dashboard images",
+    // Cognito outputs (galileo-website needs these to configure Amplify Auth).
+    new cdk.CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
+    new cdk.CfnOutput(this, "UserPoolClientId", {
+      value: userPoolClient.userPoolClientId,
     });
+
+    // ============================================================
+    // 8. COMMERCIAL API TIERS (TideWatch E7)
+    // One API Gateway usage plan per pricing tier (throttle + monthly quota).
+    // Tenants using direct machine-to-machine API access are issued an API key
+    // bound to their tier's plan at onboarding (see E9/E11). The dashboard uses
+    // the Cognito JWT and the stage-level default throttle above.
+    // ============================================================
+    for (const tier of ApiTiers) {
+      new apigateway.UsagePlan(this, `UsagePlan${tier.name}`, {
+        name: `TideWatch-${tier.name}`,
+        description: `${tier.name} tier: ${tier.rateLimit} req/s, ${tier.monthlyQuota}/mo`,
+        throttle: { rateLimit: tier.rateLimit, burstLimit: tier.burstLimit },
+        quota: {
+          limit: tier.monthlyQuota,
+          period: apigateway.Period.MONTH,
+        },
+        apiStages: [{ stage: api.deploymentStage }],
+      });
+    }
   }
 }
