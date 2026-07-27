@@ -1,0 +1,93 @@
+.tw-page {
+  min-height: 100vh;
+  background: #0b1120;
+  color: #e2e8f0;
+}
+.tw-console {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 90px 20px 40px;
+}
+.tw-title {
+  font-size: 1.8rem;
+  margin-bottom: 12px;
+}
+.tw-usage {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+.tw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.tw-card {
+  background: #111a2e;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 16px;
+}
+.tw-card h2 {
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+}
+.tw-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tw-link {
+  background: none;
+  border: none;
+  color: #4fd1c5;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.95rem;
+}
+.tw-row {
+  display: flex;
+  gap: 8px;
+}
+.tw-row input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #334155;
+  background: #0b1120;
+  color: #e2e8f0;
+}
+.tw-row button,
+.tw-card button {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+.tw-spark {
+  display: block;
+  margin-bottom: 8px;
+}
+.tw-analysis {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+.tw-muted {
+  color: #64748b;
+}
+.tw-error {
+  background: #7f1d1d;
+  color: #fecaca;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}

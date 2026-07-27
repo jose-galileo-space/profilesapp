@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
+import { postTask } from "../api/client";
 import { MapContainer, TileLayer, Polygon, Marker, useMapEvents, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -230,23 +231,12 @@ export default function MissionPlanner() {
     };
 
     try {
-      // 2. Send the POST request to your AWS endpoint
-      const API_URL = "https://api.galileo-space.com/task";
-      
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        throw new Error(`AWS API Error: ${response.status}`);
-      }
+      // 2. Send the tasking command through the authenticated client
+      // (POST /task now requires a Cognito JWT — E3b).
+      await postTask(payload);
 
       console.log("Mission Tasked Successfully:", payload);
-      
+
       // 3. Clear the tasking state and redirect
       setIsTasking(false);
       navigate("/dashboard");

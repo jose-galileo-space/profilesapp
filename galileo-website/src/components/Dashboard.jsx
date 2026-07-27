@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
+import { getImages } from "../api/client";
 import "./Dashboard.css";
 
-// CONFIGURATION
-// 💡 Reminder: You might want to update this to your new API Gateway URL!
-// e.g., const API_URL = "https://api.galileo-space.com/images";
-const API_URL = "https://l2jl5bxtrdlcqk6tgdmqx7ixte0wqcww.lambda-url.us-west-1.on.aws/";
+// Processed-imagery bucket for rendering scene thumbnails. Intel now comes from
+// the authenticated GET /v1/images endpoint via api/client (E13), replacing the
+// removed public GetImages Function URL.
 const BUCKET_NAME = "orbitalstack-alpha-processedbucketde59930c-muvr8tmns0fa";
 
 export default function Dashboard() {
@@ -29,9 +29,8 @@ export default function Dashboard() {
       }
     }
 
-    // 2. Fetch fresh data from AWS
-    fetch(API_URL)
-      .then((res) => res.json())
+    // 2. Fetch fresh data from the authenticated API (GET /v1/images).
+    getImages()
       .then((data) => {
         setMissionSummary(data.mission_summary || "No intel available.");
         setImages(data.images || []);
