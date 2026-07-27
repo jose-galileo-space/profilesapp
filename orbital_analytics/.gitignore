@@ -1,8 +1,17 @@
+# Compiled TypeScript output (bin/, lib/, test/) — sources are .ts
 *.js
-!jest.config.js
 *.d.ts
+!jest.config.js
+
+# Lambda handlers written directly in JavaScript are source, not build output
+!lambdas/**/*.js
+
 node_modules
 *.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
 
 # CDK asset staging directory
 .cdk.staging
