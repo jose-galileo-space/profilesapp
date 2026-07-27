@@ -1,0 +1,225 @@
+openapi: 3.0.3
+info:
+  title: TideWatch API
+  version: "1.0.0"
+  description: >
+    Galileo TideWatch — maritime activity intelligence.
+    Define areas of interest (AOIs), trend vessel activity, receive threshold
+    alerts, and generate curated intelligence reports from satellite EO.
+    All /v1 routes require a Cognito JWT (Authorization: Bearer <idToken>).
+    Requests are scoped to the caller's tenant (custom:tenantId claim).
+servers:
+  - url: https://api.galileo-space.com
+    description: Production
+components:
+  securitySchemes:
+    cognitoJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Cognito user-pool ID token. Tenant is taken from custom:tenantId.
+  schemas:
+    AlertRule:
+      type: object
+      properties:
+        id: { type: string, example: r1 }
+        type:
+          type: string
+          enum: [vessel_max, vessel_min, surge_pct]
+        threshold: { type: number, example: 40 }
+    AOI:
+      type: object
+      properties:
+        aoiId: { type: string, readOnly: true }
+        name: { type: string, example: Port of Singapore anchorage }
+        geometry:
+          type: object
+          description: GeoJSON polygon
+        bbox:
+          type: array
+          items: { type: number }
+        revisit: { type: string, example: daily }
+        alertRules:
+          type: array
+          items: { $ref: "#/components/schemas/AlertRule" }
+        createdAt: { type: string, format: date-time, readOnly: true }
+      required: [name, geometry]
+    Activity:
+      type: object
+      properties:
+        aoiId: { type: string }
+        observationCount: { type: integer }
+        latestVesselCount: { type: number, nullable: true }
+        last7dAvg: { type: number, nullable: true }
+        prev7dAvg: { type: number, nullable: true }
+        weekOverWeekDelta: { type: number, nullable: true }
+        weekOverWeekPct: { type: number, nullable: true }
+        series:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp: { type: string, format: date-time }
+              vesselCount: { type: number }
+              imageId: { type: string }
+    Report:
+      type: object
+      properties:
+        reportId: { type: string, readOnly: true }
+        title: { type: string }
+        aoiIds:
+          type: array
+          items: { type: string }
+        promptText: { type: string }
+        status:
+          type: string
+          enum: [DRAFT, ANALYZED]
+          readOnly: true
+        analysis: { type: string, readOnly: true }
+        createdAt: { type: string, format: date-time, readOnly: true }
+        analyzedAt: { type: string, format: date-time, readOnly: true }
+      required: [title]
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+security:
+  - cognitoJwt: []
+paths:
+  /v1/aois:
+    get:
+      summary: List AOIs for the tenant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  aois: { type: array, items: { $ref: "#/components/schemas/AOI" } }
+                  count: { type: integer }
+    post:
+      summary: Create an AOI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AOI" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AOI" }
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /v1/aois/{aoiId}:
+    parameters:
+      - name: aoiId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get one AOI
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AOI" }
+        "404": { description: Not found }
+    delete:
+      summary: Delete an AOI
+      responses:
+        "200": { description: Deleted }
+        "404": { description: Not found }
+  /v1/aois/{aoiId}/activity:
+    parameters:
+      - name: aoiId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Vessel-activity time series + week-over-week delta for an AOI
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Activity" }
+        "404": { description: Not found }
+  /v1/reports:
+    get:
+      summary: List reports for the tenant
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reports: { type: array, items: { $ref: "#/components/schemas/Report" } }
+                  count: { type: integer }
+    post:
+      summary: Create a report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Report" }
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Report" }
+  /v1/reports/{reportId}:
+    parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get one report
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Report" }
+        "404": { description: Not found }
+  /v1/reports/{reportId}/analyze:
+    parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      summary: Generate an AI intelligence synthesis over the report's AOIs
+      responses:
+        "200":
+          description: Analyzed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Report" }
+        "404": { description: Not found }
+  /v1/images:
+    get:
+      summary: Latest analyzed scenes + JIT mission brief for the tenant dashboard
+      responses:
+        "200": { description: OK }
+# ---------------------------------------------------------------------------
+# Rate limits / commercial tiers (enforced by API Gateway usage plans, E7).
+# Dashboard traffic authenticates with the Cognito JWT above. Tenants using
+# direct machine-to-machine API access are additionally issued an API key
+# bound to their plan; per-key throttle + monthly quota by tier:
+#   Watch:      5 req/s  (burst 10),   50k req/month
+#   Pro:        25 req/s (burst 50),   500k req/month
+#   Enterprise: 100 req/s (burst 200), 5M req/month
+# A stage-level default throttle protects the API regardless of key.
+# ---------------------------------------------------------------------------
